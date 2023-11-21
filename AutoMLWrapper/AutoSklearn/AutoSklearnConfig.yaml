@@ -1,0 +1,53 @@
+AutoSklearnClassifier:
+  __data_types:
+    tabular:
+      __task_type:
+        classification:
+          __problem_types:
+            - binary
+            - multiclass
+            - multilabel
+  __hyperparameter_details:
+    constructor:
+      time_left_for_this_task:
+        __has_values: false
+        __dtype: int
+        __user_mapping: time_limit
+      n_jobs:
+        __has_values: false
+        __dtype: int
+        __user_mapping: n_jobs
+      __extra_args:
+        ensemble_kwargs:
+          __dtype: dict
+          ensemble_size:
+            __has_values: false
+            __dtype: int
+            __user_mapping: ensemble_size
+     
+
+AutoSklearnRegressor:
+  __data_types:
+    tabular:
+      __task_type:
+          regression:
+            __problem_types:
+              - regression
+              - multioutput
+  __hyperparameter_details:
+    constructor:
+      time_left_for_this_task:
+        __has_values: false
+        __dtype: int
+        __user_mapping: time_limit
+      n_jobs:
+        __has_values: false
+        __dtype: int
+        __user_mapping: n_jobs
+      __extra_args:
+        ensemble_kwargs:
+          __dtype: dict
+          ensemble_size:
+            __has_values: false
+            __dtype: int
+            __user_mapping: ensemble_size    
