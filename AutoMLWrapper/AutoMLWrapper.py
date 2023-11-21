@@ -12,6 +12,11 @@ class AutoMLWrapper:
         self.library = None
         self.library_name = library_name
         self.is_initialized = False
+        self.out_path = None
+
+    #---------------------------------------------------------------------------------------------#
+    def set_out_path(self, out_path: str) -> None:
+        self.out_path = out_path
 
     #---------------------------------------------------------------------------------------------#
     def initialize(self, data: Any, target_column: str, task_type: Optional[str] = None, data_type: Optional[str] = None, problem_type: Optional[str] = None) -> None:
@@ -45,6 +50,9 @@ class AutoMLWrapper:
         else:
             if data is not None:
                 self.library._infer_problem_type(data, target_column)
+
+        if self.out_path is not None:
+            self.library._set_out_path(self.out_path)
 
         if data is not None:
              self.is_initialized = True

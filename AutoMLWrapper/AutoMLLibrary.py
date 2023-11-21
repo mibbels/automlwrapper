@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -13,6 +14,11 @@ class AutoMLLibrary:
         self.data_type = None
         self.problem_type = None
         self.is_initialized = False
+        self.out_path = None
+    
+    #---------------------------------------------------------------------------------------------#
+    def _set_out_path(self, out_path: str) -> None:
+        self.out_path = out_path
   
     #---------------------------------------------------------------------------------------------#
     def _set_data_type(self, data_type: str) -> None:

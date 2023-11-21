@@ -3,7 +3,7 @@ from autogluon.multimodal import MultiModalPredictor
 from autogluon.timeseries import TimeSeriesPredictor
 
 import os
-
+from datetime import datetime
 from ..AutoMLLibrary import AutoMLLibrary
 from .AutoGluonConfig import AutoGluonConfig
 
@@ -12,7 +12,8 @@ class AutoGluonWrapper(AutoMLLibrary):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config = AutoGluonConfig(os.path.join(os.path.dirname(__file__), 'AutoGluonConfig.yaml'))
-        
+        self.output_path = os.path.join(os.path.dirname(__file__),
+                                         f'../output/autogluon/{datetime.timestamp(datetime.now())}')
     #---------------------------------------------------------------------------------------------#
     def _map_problem_type(self):
 
@@ -98,6 +99,7 @@ class AutoGluonWrapper(AutoMLLibrary):
         if self.data_type == 'image' or self.data_type == 'text':
             self.model = MultiModalPredictor(
                 label=target_column,
+                path=self.output_path,
                 problem_type=self.autogluon_problem_type,
                 **(self.config.get_params_constructor_by_key('MultiModalPredictor') or {})
             )
@@ -105,6 +107,7 @@ class AutoGluonWrapper(AutoMLLibrary):
         elif self.data_type == 'tabular':
             self.model = TabularPredictor(
                 label=target_column,
+                path=self.output_path,
                 problem_type=self.autogluon_problem_type,
                 **(self.config.get_params_constructor_by_key('TabularPredictor') or {})
             )
@@ -112,6 +115,7 @@ class AutoGluonWrapper(AutoMLLibrary):
         elif self.data_type == 'timeseries':
             self.model = TimeSeriesPredictor(
                 target=target_column,
+                path=self.output_path,
                 **(self.config.get_params_constructor_by_key('TimeSeriesPredictor') or {})
             )
         

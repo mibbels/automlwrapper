@@ -1,5 +1,6 @@
 import autokeras as ak
 
+from datetime import datetime
 import os
 from ..AutoMLLibrary import AutoMLLibrary
 from .AutoKerasConfig import AutoKerasConfig
@@ -10,7 +11,9 @@ class AutoKerasWrapper(AutoMLLibrary):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config = AutoKerasConfig(os.path.join(os.path.dirname(__file__), 'AutoKerasConfig.yaml'))
-    
+        self.output_path = os.path.join(os.path.dirname(__file__),
+                                         f'../output/autokeras/{datetime.timestamp(datetime.now())}')
+        
     #---------------------------------------------------------------------------------------------#
     def data_preprocessing(self, data, target):
         if self.data_type == 'tabular' or self.data_type == 'timeseries':
@@ -41,10 +44,12 @@ class AutoKerasWrapper(AutoMLLibrary):
     def _train_structured(self, data, target_column, user_hyperparameters: dict = {}):
         if self.task_type == "classification":
             self.model = ak.StructuredDataClassifier(
+                diretory=self.output_path,
                 **(self.config.get_params_constructor_by_key('StructuredDataClassifier') or {})
             )
         elif self.task_type == "regression":
             self.model = ak.StructuredDataRegressor(
+                diretory=self.output_path,
                 **(self.config.get_params_constructor_by_key('StructuredDataRegressor') or {})
             )
 
@@ -60,10 +65,12 @@ class AutoKerasWrapper(AutoMLLibrary):
     def _train_image(self, data, target_column, user_hyperparameters: dict = {}):
         if self.task_type == "classification":
             self.model = ak.ImageClassifier(
+                diretory=self.output_path,
                 **(self.config.get_params_constructor_by_key('ImageClassifier') or {})
             )
         elif self.task_type == "regression":
             self.model = ak.ImageRegressor(
+                diretory=self.output_path,
                 **(self.config.get_params_constructor_by_key('ImageRegressor') or {})
             )
 
@@ -78,6 +85,7 @@ class AutoKerasWrapper(AutoMLLibrary):
     def _train_text(self, data, target_column, user_hyperparameters: dict = {}):
         if self.task_type == "classification":
             self.model = ak.TextClassifier(
+                diretory=self.output_path,
                 **(self.config.get_params_constructor_by_key('TextClassifier') or {})
             )
         elif self.task_type == "regression":
@@ -95,6 +103,7 @@ class AutoKerasWrapper(AutoMLLibrary):
     #---------------------------------------------------------------------------------------------#
     def _train_timeseries(self, data, target_column, user_hyperparameters: dict = {}):
         self.model = ak.TimeseriesForecaster(
+            diretory=self.output_path,
             **(self.config.get_params_constructor_by_key('TimeseriesForecaster') or {})
         )
 

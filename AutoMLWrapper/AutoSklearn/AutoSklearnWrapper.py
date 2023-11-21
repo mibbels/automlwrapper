@@ -2,6 +2,7 @@ from autosklearn.classification import AutoSklearnClassifier
 from autosklearn.regression import AutoSklearnRegressor
 
 import os
+from datetime import datetime
 
 from ..AutoMLLibrary import AutoMLLibrary
 from .AutoSklearnConfig import AutoSklearnConfig
@@ -11,7 +12,9 @@ class AutoSklearnWrapper(AutoMLLibrary):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config = AutoSklearnConfig(os.path.join(os.path.dirname(__file__), 'AutoKerasConfig.yaml'))
-    
+        self.output_path = os.path.join(os.path.dirname(__file__),
+                                         f'../output/autosklearn/{datetime.timestamp(datetime.now())}')
+
     #---------------------------------------------------------------------------------------------#
     def data_preprocessing(self, data, target_column):
         X_train, y_train, X_test, y_test = self.split_and_seperate(data, target_column, ratio=0.2, type='pandas')
@@ -24,10 +27,14 @@ class AutoSklearnWrapper(AutoMLLibrary):
 
         if self.task_type == 'classification':
             self.model = AutoSklearnClassifier(
+                tmp_folder=self.output_path,
+                delete_tmp_folder_after_terminate=False,
                 **(self.config.get_params_constructor_by_key('AutoSklearnClassifier') or {})
             )
         elif self.task_type == 'regression':
             self.model = AutoSklearnRegressor(
+                tmp_folder=self.output_path,
+                delete_tmp_folder_after_terminate=False,
                 **(self.config.get_params_constructor_by_key('AutoSklearnRegressor') or {})
             )
 
