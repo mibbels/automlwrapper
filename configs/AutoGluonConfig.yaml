@@ -1,0 +1,139 @@
+MultiModalPredictor:
+  __data_types:
+    image:
+    _task_types:
+      classification:
+        __problem_types:
+          - binary
+          - multiclass
+          - zero-shot
+      regression:
+        __problem_types:
+          - regression
+      object-detection:
+        __problem_types:
+          - object-detection
+          - zero-shot
+        similarity:
+          __problem_types:
+            - similarity
+    text:
+      __task_types:
+        similarity:
+          __problem_types:
+            - similarity
+      classification:
+        __problem_types:
+          - binary
+          - multiclass
+          - few-shot
+  __hyperparameter_details:
+    constructor:
+      presets:
+        __has_values: true
+        __dtype: str
+        __values:
+          - best_quality
+          - high_quality
+          - medium_quality
+        __user_mapping: preset
+    fit:
+      time_limit:
+        __has_values: false
+        __dtype: int
+        __user_mapping: time_limit
+      __extra_args:
+        hyperparameter_tune_kwargs:
+            __dtype: dict
+            num_trials:
+                __has_values: false
+                __dtype: int
+                __user_mapping: num_trials
+TabularPredictor:
+  __data_types:
+    tabular:
+      __task_type:
+        classification:
+          __problem_types:
+            - binary
+            - multiclass
+        regression:
+          __problem_types:
+            - regression
+            - quantile
+  __hyperparameter_details:
+    constructor:
+      eval_metric:
+        __has_values: false
+        __dtype: str
+        __user_mapping: eval_metric
+    fit:
+      time_limit:
+        __has_values: false
+        __dtype: int
+        __user_mapping: time_limit
+      presets:
+        __has_values: true
+        __dtype: str
+        __values:
+          - best_quality
+          - high_quality
+          - good_quality
+          - medium_quality
+          - optimize_for_deployment
+          - interpretable
+          - ignore_text
+        __user_mapping: preset
+      __extra_args:
+        hyperparameter_tune_kwargs:
+            __dtype: dict
+            num_trials:
+                __has_values: false
+                __dtype: int
+                __user_mapping: num_trials
+TimeSeriesPredictor:
+  __data_types:
+    timeseries:
+    __task_type:
+        forecast:
+          __problem_types:
+            - forecast
+  __hyperparameter_mappings:
+    constructor:
+      prediction_length:
+        __has_values: false
+        __dtype: int
+        __user_mapping: prediction_length
+      eval_metric:
+        __has_values: true
+        __dtype: str
+        __values:
+          - mean_wQuantileLoss
+          - MAPE
+          - sMAPE
+          - MASE
+          - MSE
+          - RMSE
+        __user_mapping: eval_metric
+    fit:
+      time_limit:
+        __has_values: false
+        __dtype: int
+        __user_mapping: time_limit
+      presets:
+        __has_values: true
+        __dtype: str
+        __values:
+          - best_quality
+          - high_quality
+          - medium_quality
+          - fast training
+        __user_mapping: preset
+      __extra_args:
+        hyperparameter_tune_kwargs:
+            __dtype: dict
+            num_trials:
+                __has_values: false
+                __dtype: int
+                __user_mapping: num_trials
+
