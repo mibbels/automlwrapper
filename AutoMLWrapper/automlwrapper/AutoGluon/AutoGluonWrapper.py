@@ -90,7 +90,21 @@ class AutoGluonWrapper(AutoMLLibrary):
         
         else:
             raise Exception(f'Unknown data type {self.data_type}')
+    
+     #---------------------------------------------------------------------------------------------#
+    def data_preprocessing(self, data, target_column):
         
+        if self.custom_data_preprocessing_func is not None:
+            data = self.custom_data_preprocessing_func(data)
+            return data
+        
+        # done automatically by autogluon
+        #if self.data_type == 'tabular':
+        #    train, test = self.split(data, target_column, type='pandas')
+        #    return {'train_data': train, 'tuning_data': test}
+
+        return {'train_data': data}
+    
     #---------------------------------------------------------------------------------------------#
     def _train_model(self, data, target_column, user_hyperparameters: dict = {}):
         
@@ -121,7 +135,7 @@ class AutoGluonWrapper(AutoMLLibrary):
             )
         
         self.model.fit(
-            data,
+            **(self.data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 
                                           else 'TabularPredictor' if self.problem_type == 'tabular' 
                                           else 'MultiModalPredictor') or {})

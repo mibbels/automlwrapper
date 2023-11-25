@@ -13,12 +13,19 @@ class AutoMLWrapper:
         self.__library_name = library_name
         self.__is_initialized = False
         self.__out_path = None
-
+        
     #---------------------------------------------------------------------------------------------#
     def SetOutputDirectory(self, outputDirectory: str) -> None:
         """Set the output directory for the AutoML process.
         """
         self.__out_path = outputDirectory
+
+    #---------------------------------------------------------------------------------------------#
+    def SetCustomDataPreprocessing(self, custom_preprocessing_func):
+        """
+        Set a custom data preprocessing function that will be applied before model training.
+        """
+        self.__library._set_custom_data_preprocessing(custom_preprocessing_func)
 
     #---------------------------------------------------------------------------------------------#
     @property

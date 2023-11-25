@@ -17,6 +17,11 @@ class AutoKerasWrapper(AutoMLLibrary):
         
     #---------------------------------------------------------------------------------------------#
     def data_preprocessing(self, data, target):
+
+        if self.custom_data_preprocessing_func is not None:
+            data = self.custom_data_preprocessing_func(data)
+            return data
+        
         if self.data_type == 'tabular' or self.data_type == 'timeseries':
             x, y = self.separate(data, target, type='pandas')
 

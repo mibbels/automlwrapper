@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from typing import Tuple
 
 class AutoMLLibrary:
-    __slots__ = ['model', 'config', 'task_type', 'data_type', 'problem_type', 'is_initialized', 'output_path']
+    __slots__ = ['model', 'config', 'task_type', 'data_type', 'problem_type', 'is_initialized', 'output_path', 'custom_data_preprocessing_func']
     #---------------------------------------------------------------------------------------------#
     def __init__(self, **kwargs: str) -> None:
         self.model =            None
@@ -15,11 +15,16 @@ class AutoMLLibrary:
         self.problem_type =     None
         self.is_initialized =   False
         self.output_path =      None
+        self.custom_data_preprocessing_func = None
         
     
     #---------------------------------------------------------------------------------------------#
     def _set_out_path(self, out_path: str) -> None:
         self.output_path = out_path
+    
+    #---------------------------------------------------------------------------------------------#
+    def _set_custom_data_preprocessing(self, custom_preprocessing_func):
+        self.custom_data_preprocessing_func = custom_preprocessing_func
   
     #---------------------------------------------------------------------------------------------#
     def _set_data_type(self, data_type: str) -> None:

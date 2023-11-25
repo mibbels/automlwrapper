@@ -18,6 +18,11 @@ class AutoSklearnWrapper(AutoMLLibrary):
 
     #---------------------------------------------------------------------------------------------#
     def data_preprocessing(self, data, target_column):
+        
+        if self.custom_data_preprocessing_func is not None:
+            data = self.custom_data_preprocessing_func(data)
+            return data
+        
         X_train, y_train, X_test, y_test = self.split_and_separate(data, target_column, ratio=0.2, type='pandas')
         return {'X': X_train, 'y': y_train, 'X_test': X_test, 'y_test': y_test}
     
