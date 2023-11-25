@@ -8,16 +8,17 @@ from ..AutoMLLibrary import AutoMLLibrary
 from .AutoSklearnConfig import AutoSklearnConfig
 
 class AutoSklearnWrapper(AutoMLLibrary):
+    __slots__ = []
     #---------------------------------------------------------------------------------------------#
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.config = AutoSklearnConfig(os.path.join(os.path.dirname(__file__), 'AutoKerasConfig.yaml'))
+        self.config = AutoSklearnConfig(os.path.join(os.path.dirname(__file__), 'AutoSklearnConfig.yaml'))
         self.output_path = os.path.join(os.path.dirname(__file__),
                                          f'../output/autosklearn/{datetime.timestamp(datetime.now())}')
 
     #---------------------------------------------------------------------------------------------#
     def data_preprocessing(self, data, target_column):
-        X_train, y_train, X_test, y_test = self.split_and_seperate(data, target_column, ratio=0.2, type='pandas')
+        X_train, y_train, X_test, y_test = self.split_and_separate(data, target_column, ratio=0.2, type='pandas')
         return {'X': X_train, 'y': y_train, 'X_test': X_test, 'y_test': y_test}
     
     #---------------------------------------------------------------------------------------------#

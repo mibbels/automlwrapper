@@ -4,21 +4,22 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from typing import Tuple
 
-
-
 class AutoMLLibrary:
+    __slots__ = ['model', 'config', 'task_type', 'data_type', 'problem_type', 'is_initialized', 'output_path']
     #---------------------------------------------------------------------------------------------#
     def __init__(self, **kwargs: str) -> None:
-        self.model = None
-        self.task_type = None
-        self.data_type = None
-        self.problem_type = None
-        self.is_initialized = False
-        self.out_path = None
+        self.model =            None
+        self.config =           None
+        self.task_type =        None
+        self.data_type =        None
+        self.problem_type =     None
+        self.is_initialized =   False
+        self.output_path =      None
+        
     
     #---------------------------------------------------------------------------------------------#
     def _set_out_path(self, out_path: str) -> None:
-        self.out_path = out_path
+        self.output_path = out_path
   
     #---------------------------------------------------------------------------------------------#
     def _set_data_type(self, data_type: str) -> None:
@@ -76,7 +77,7 @@ class AutoMLLibrary:
             raise Exception(f'Unknown type {type}')
 
     #---------------------------------------------------------------------------------------------#
-    def seperate(self, data, target, type = 'pandas'):
+    def separate(self, data, target, type = 'pandas'):
         if type == 'pandas':
             return self._separate_x_y_df(data, target)
         elif type == 'numpy':
@@ -85,7 +86,7 @@ class AutoMLLibrary:
             raise Exception(f'Unknown type {type}')
 
     #---------------------------------------------------------------------------------------------#     
-    def split_and_seperate(self, data, target, ratio: float = 0.2, type = 'pandas'):
+    def split_and_separate(self, data, target, ratio: float = 0.2, type = 'pandas'):
         if type == 'pandas':
             train_data, test_data = self._split_test_train_df(data, ratio)
             X_train, y_train = self._separate_x_y_df(train_data, target_column=target)

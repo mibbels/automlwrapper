@@ -8,6 +8,7 @@ from ..AutoMLLibrary import AutoMLLibrary
 from .AutoGluonConfig import AutoGluonConfig
 
 class AutoGluonWrapper(AutoMLLibrary):
+    __slots__ = ['autogluon_problem_type']
     #---------------------------------------------------------------------------------------------#
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

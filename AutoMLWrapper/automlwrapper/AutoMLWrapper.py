@@ -1,75 +1,120 @@
 from typing import Any, Optional, Dict
 
-
-
 from .AutoGluon.AutoGluonWrapper import AutoGluonWrapper
 from .AutoKeras.AutoKerasWrapper import AutoKerasWrapper
 from .AutoSklearn.AutoSklearnWrapper import AutoSklearnWrapper
 
 class AutoMLWrapper:
+    __slots__ = ['__library', '__library_name', '__is_initialized', '__out_path']
+    __properties__ = ['_library', '_library_name', '_is_initialized', '_out_path']
     #---------------------------------------------------------------------------------------------#
     def __init__(self, library_name: str) -> None:
-        self.library = None
-        self.library_name = library_name
-        self.is_initialized = False
-        self.out_path = None
+        self.__library = None
+        self.__library_name = library_name
+        self.__is_initialized = False
+        self.__out_path = None
 
     #---------------------------------------------------------------------------------------------#
-    def set_out_path(self, out_path: str) -> None:
-        self.out_path = out_path
+    def SetOutputDirectory(self, outputDirectory: str) -> None:
+        """Set the output directory for the AutoML process.
+        """
+        self.__out_path = outputDirectory
 
     #---------------------------------------------------------------------------------------------#
-    def initialize(self, data: Any, target_column: str, task_type: Optional[str] = None, data_type: Optional[str] = None, problem_type: Optional[str] = None) -> None:
-        
-        if self.library_name == "auto-sklearn":
-            self.library = AutoSklearnWrapper()
+    @property
+    def _library(self) -> Any:
+        return self.__library
+    
+    @_library.setter
+    def _library(self, _) -> None:
+        if self.__library_name == "autosklearn":
+            self.__library = AutoSklearnWrapper()
 
-        elif self.library_name == "auto-keras":
-            self.library = AutoKerasWrapper()
+        elif self.__library_name == "autokeras":
+            self.__library = AutoKerasWrapper()
 
-        elif self.library_name == "autogluon":
-            self.library = AutoGluonWrapper()
+        elif self.__library_name == "autogluon":
+            self.__library = AutoGluonWrapper()
 
         else:
             raise ValueError("Invalid library name")
+    
+    #---------------------------------------------------------------------------------------------#
+    @property
+    def _library_name(self) -> str:
+        return self.__library_name
+    
+    @_library_name.setter
+    def _library_name(self, library_name: str) -> None:
+        raise NotImplementedError("This property is read-only")
+    
+    #---------------------------------------------------------------------------------------------#
+    @property
+    def _is_initialized(self) -> bool:
+        return self.__is_initialized
+
+    @_is_initialized.setter
+    def _is_initialized(self, is_initialized: bool) -> None:
+        raise NotImplementedError("This property is read-only")
+
+    #---------------------------------------------------------------------------------------------#
+    @property
+    def _out_path(self) -> str:
+        return self.__out_path
+    
+    @_out_path.setter
+    def _out_path(self, out_path: str) -> None:
+        ### add validation ??? ###
+        self.__out_path = out_path
+
+    #---------------------------------------------------------------------------------------------#
+    def Initialize(self, data_sample: Any, target_column: str, task_type: Optional[str] = None, data_type: Optional[str] = None, problem_type: Optional[str] = None) -> None:
+        """Initialize the AutoML process. Use for determining the task type, data type, and problem type beforehand.
+        """
+
+        if self.__library == None:
+            self._library = self.__library_name 
 
         if task_type is not None:
-            self.library._set_task_type(task_type)
+            self.__library._set_task_type(task_type)
         else:
-            if data:
-                self.library._infer_task_type(data, target_column)
+            if data_sample is not None:
+                self.__library._infer_task_type(data_sample, target_column)
         
         if data_type is not None:
-            self.library._set_data_type(data_type)
+            self.__library._set_data_type(data_type)
         else:
-            if data is not None:
-                self.library._infer_data_type(data, target_column)
+            if data_sample is not None:
+                self.__library._infer_data_type(data_sample, target_column)
 
         if problem_type is not None:
-            self.library._set_problem_type(problem_type)
+            self.__library._set_problem_type(problem_type)
         else:
-            if data is not None:
-                self.library._infer_problem_type(data, target_column)
+            if data_sample is not None:
+                self.__library._infer_problem_type(data_sample, target_column)
 
-        if self.out_path is not None:
-            self.library._set_out_path(self.out_path)
+        if self.__out_path is not None:
+            self.__library._set_out_path(self.__out_path)
 
-        if data is not None:
-             self.is_initialized = True
+        if data_sample is not None:
+             self.__is_initialized = True
         else:
-            self.is_initialized = False
+            self.__is_initialized = False
 
     #---------------------------------------------------------------------------------------------#
-    def train(self, data: Any, target_column: str, task_type: Optional[str] = None, data_type: Optional[str] = None, 
+    def Train(self, data: Any, target_column: str, task_type: Optional[str] = None, data_type: Optional[str] = None, 
               problem_type: Optional[str] = None, hyperparameters: Optional[Dict[str, Any]] = {}) -> None:
-        if not self.is_initialized:
-            self.initialize(data, target_column, task_type, data_type, problem_type)
+        """ Invoke the underlying AutoML library to train a model.
+        """
 
-        self.library._train_model(data, target_column, hyperparameters)
+        if not self.__is_initialized:
+            self.Initialize(data, target_column, task_type, data_type, problem_type)
+
+        self.__library._train_model(data, target_column, hyperparameters)
 
     #---------------------------------------------------------------------------------------------#
-    def evaluate(self, test_data: Any) -> float:
-        if self.library is None:
+    def Evaluate(self, test_data: Any) -> float:
+        if self.__library is None:
             raise ValueError("You must call 'train' before 'evaluate'")
         
-        return self.library.evaluate(test_data)
+        pass

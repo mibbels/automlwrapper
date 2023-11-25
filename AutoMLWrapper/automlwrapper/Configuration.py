@@ -1,6 +1,7 @@
 import yaml
 
 class Configuration:
+    __slots__ = ['config', 'user_hyperparameters']
     #---------------------------------------------------------------------------------------------#
     def __init__(self, config_file_path):
         self.config = self._load_config(config_file_path)
@@ -9,6 +10,10 @@ class Configuration:
     def _load_config(self, config_file_path):
         with open(config_file_path, 'r') as config_file:
             return yaml.safe_load(config_file)
+    
+    #---------------------------------------------------------------------------------------------#
+    def map_hyperparameters(self, user_hyperparameters: dict):
+        self.user_hyperparameters = user_hyperparameters
 
     #---------------------------------------------------------------------------------------------#
     def _get_hyperparameter_details(self, func_type: str = None, model_type: str = None):

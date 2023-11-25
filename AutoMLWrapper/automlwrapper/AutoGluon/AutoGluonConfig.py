@@ -1,13 +1,10 @@
 from ..Configuration import Configuration
 
 class AutoGluonConfig(Configuration):
+    __slots__ = []
     #---------------------------------------------------------------------------------------------#
     def __init__(self, config_path: str):
         super().__init__(config_path)
-
-    #---------------------------------------------------------------------------------------------#
-    def map_hyperparameters(self, user_hyperparameters: dict):
-        self.user_hyperparameters = user_hyperparameters
 
     #---------------------------------------------------------------------------------------------#
     def get_params_constructor_by_key(self, key):
