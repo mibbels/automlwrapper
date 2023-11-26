@@ -125,3 +125,13 @@ class AutoMLWrapper:
             raise ValueError("You must call 'train' before 'evaluate'")
         
         pass
+
+    #---------------------------------------------------------------------------------------------#
+    def Output(self, nBestModels: int = 1, outputForMLFlow : bool = True):
+        if self.__library is None:
+            raise ValueError("You must call 'train' before 'output'")
+
+        if outputForMLFlow:
+            return self.__library._mlflow_ready_output(nBestModels)
+        else:
+            pass
