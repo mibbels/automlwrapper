@@ -1,4 +1,6 @@
 AutoSklearnClassifier:
+  __mlflow:
+    __log_model_type: sklearn
   __data_types:
     tabular:
       __task_type:
@@ -17,6 +19,10 @@ AutoSklearnClassifier:
         __has_values: false
         __dtype: int
         __user_mapping: n_jobs
+      memory_limit:
+        __has_values: false
+        __dtype: int
+        __user_mapping: memory_limit
       __extra_args:
         ensemble_kwargs:
           __dtype: dict
@@ -27,6 +33,8 @@ AutoSklearnClassifier:
      
 
 AutoSklearnRegressor:
+  __mlflow:
+    __log_model_type: sklearn
   __data_types:
     tabular:
       __task_type:
@@ -44,6 +52,10 @@ AutoSklearnRegressor:
         __has_values: false
         __dtype: int
         __user_mapping: n_jobs
+      memory_limit:
+        __has_values: false
+        __dtype: int
+        __user_mapping: memory_limit
       __extra_args:
         ensemble_kwargs:
           __dtype: dict

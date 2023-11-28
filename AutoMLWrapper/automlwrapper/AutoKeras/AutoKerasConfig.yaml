@@ -1,4 +1,6 @@
 ImageClassifier:
+  __mlflow:
+    __log_model_type: keras
   __data_types:
     image:
       __task_type:
@@ -22,7 +24,10 @@ ImageClassifier:
         __has_values: false
         __dtype: int
         __user_mapping: epochs
+
 ImageRegressor:
+  __mlflow:
+    __log_model_type: keras
   __data_types:
     image:
       __task_type:
@@ -45,7 +50,10 @@ ImageRegressor:
         __has_values: false
         __dtype: int,
         __user_mapping: epochs
+
 TextClassifier:
+  __mlflow:
+    __log_model_type: keras
   __data_types:
     text:
       __task_type:
@@ -69,7 +77,10 @@ TextClassifier:
         __has_values: false
         __dtype: int
         __user_mapping: epochs
+
 TextRegressor:
+  __mlflow:
+    __log_model_type: keras
   __data_types:
     text:
       __task_type:
@@ -92,7 +103,10 @@ TextRegressor:
         __has_values: false
         __dtype: int
         __user_mapping: epochs
+
 StructuredDataClassifier:
+  __mlflow:
+    __log_model_type: keras
   __data_types:
     tabular:
       __task_type:
@@ -116,7 +130,10 @@ StructuredDataClassifier:
         __has_values: false
         __dtype: int
         __user_mapping: epochs
+
 StructuredDataRegressor:
+  __mlflow:
+    __log_model_type: keras
   __data_types:
     tabular:
       __task_type:
@@ -141,6 +158,8 @@ StructuredDataRegressor:
         __user_mapping: epochs
 
 TimeseriesForecaster:
+  __mlflow:
+    __log_model_type: keras
   __data_types:
     time_series:
       __task_type:

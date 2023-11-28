@@ -118,6 +118,7 @@ class AutoGluonWrapper(AutoMLLibrary):
                 problem_type=self.autogluon_problem_type,
                 **(self.config.get_params_constructor_by_key('MultiModalPredictor') or {})
             )
+            self.log_model_type = self.config._get_mlflow_details('MultiModalPredictor').get('__log_model_type', {})
 
         elif self.data_type == 'tabular':
             self.model = TabularPredictor(
@@ -126,6 +127,7 @@ class AutoGluonWrapper(AutoMLLibrary):
                 problem_type=self.autogluon_problem_type,
                 **(self.config.get_params_constructor_by_key('TabularPredictor') or {})
             )
+            self.log_model_type = self.config._get_mlflow_details('TabularPredictor').get('__log_model_type', {})
 
         elif self.data_type == 'timeseries':
             self.model = TimeSeriesPredictor(
@@ -133,6 +135,7 @@ class AutoGluonWrapper(AutoMLLibrary):
                 path=self.output_path,
                 **(self.config.get_params_constructor_by_key('TimeSeriesPredictor') or {})
             )
+            self.log_model_type = self.config._get_mlflow_details('TimeSeriesPredictor').get('__log_model_type', {})
         
         self.model.fit(
             **(self.data_preprocessing(data, target_column)),

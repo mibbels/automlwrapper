@@ -2,10 +2,12 @@ import os
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from typing import Tuple
+from typing import Tuple, List, Dict, Any, Union
+
 
 class AutoMLLibrary:
-    __slots__ = ['model', 'config', 'task_type', 'data_type', 'problem_type', 'is_initialized', 'output_path', 'custom_data_preprocessing_func', 'fit_output']
+    __slots__ = ['model', 'config', 'task_type', 'data_type', 'problem_type', 'is_initialized', 'output_path',
+                  'custom_data_preprocessing_func', 'fit_output', 'log_model_type']
     #---------------------------------------------------------------------------------------------#
     def __init__(self, **kwargs: str) -> None:
         self.model =            None
@@ -16,6 +18,7 @@ class AutoMLLibrary:
         self.is_initialized =   False
         self.output_path =      None
         self.fit_output =       None
+        self.log_model_type =   None
         self.custom_data_preprocessing_func = None
         
     
@@ -127,4 +130,20 @@ class AutoMLLibrary:
     def _separate_x_y_np(self, data: np.ndarray, target_column_idx: int) -> Tuple[np.ndarray, np.ndarray]:
         X = np.delete(data, target_column_idx, axis=1)
         y = data[:, target_column_idx]
-        return X, y     
+        return X, y    
+
+    #=============================================================================================#
+    
+    ##### Implementation of the following methods is required for each AutoML library         #####
+    
+    #=============================================================================================#
+    def _train_model(self, 
+                     data: Union[pd.DataFrame, np.ndarray],
+                     target_column : str,
+                     user_hyperparameters: Dict[str, Any] = {}) -> None :
+
+        raise NotImplementedError
+
+    #---------------------------------------------------------------------------------------------# 
+    def _mlflow_ready_output(self, n: int = 1) -> List[Dict[str, Any]]:
+        raise NotImplementedError

@@ -23,7 +23,11 @@ class Configuration:
         If model_type is provided, it fetches hyperparameters specific to that model type.
         """
         return self.config.get(model_type, {}).get('__hyperparameter_details', {}).get(func_type, {})
-        
+    
+    #---------------------------------------------------------------------------------------------#
+    def _get_mlflow_details(self, model_type: str = None):
+        return self.config.get(model_type, {}).get('__mlflow', {})
+    
     #---------------------------------------------------------------------------------------------#
     def map_user_params(self, func_type: str = None, model_type: str = None, user_hyperparameters: dict = {}):
         """

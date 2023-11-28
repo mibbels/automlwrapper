@@ -1,4 +1,6 @@
 MultiModalPredictor:
+  __mlflow:
+    __log_model_type: pyfunc
   __data_types:
     image:
     _task_types:
@@ -49,7 +51,10 @@ MultiModalPredictor:
                 __has_values: false
                 __dtype: int
                 __user_mapping: num_trials
+
 TabularPredictor:
+  __mlflow:
+    __log_model_type: pyfunc
   __data_types:
     tabular:
       __task_type:
@@ -91,7 +96,10 @@ TabularPredictor:
                 __has_values: false
                 __dtype: int
                 __user_mapping: num_trials
+
 TimeSeriesPredictor:
+  __mlflow:
+    __log_model_type: pyfunc
   __data_types:
     timeseries:
     __task_type:

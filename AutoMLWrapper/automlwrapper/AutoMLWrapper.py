@@ -1,4 +1,5 @@
 from typing import Any, Optional, Dict
+import mlflow
 
 from .AutoGluon.AutoGluonWrapper import AutoGluonWrapper
 from .AutoKeras.AutoKerasWrapper import AutoKerasWrapper
@@ -135,3 +136,53 @@ class AutoMLWrapper:
             return self.__library._mlflow_ready_output(nBestModels)
         else:
             pass
+    
+    #---------------------------------------------------------------------------------------------#
+    def MlflowUploadBest(self, user_tags: dict):
+        best_model = self.__library._mlflow_ready_output(1)[0]  # assuming the best model is at index 0
+
+        with mlflow.start_run() as run:
+            for key, value in user_tags.items():
+                mlflow.set_tag(key, str(value))
+
+            for key, value in best_model['tags'].items():
+                mlflow.set_tag(key, str(value))
+            for key, value in best_model['params'].items():
+                mlflow.log_param(key, value)
+            for key, value in best_model['metrics'].items():
+                mlflow.log_metric(key, value)
+
+            if self.__library.log_model_type == 'sklearn':
+                mlflow.sklearn.log_model(best_model['model'], "model")
+            elif self.__library.log_model_type == 'pyfunc':
+                mlflow.pyfunc.log_model("model", python_model=best_model['model'])
+            elif self.__library.log_model_type == 'keras':
+                mlflow.keras.log_model(best_model['model'], "model")
+            else:
+                raise ValueError(f"Unknown model type {self.__library.log_model_type}")
+
+    #---------------------------------------------------------------------------------------------#
+    def MlflowUploadTopN(self, n: int, user_tags: dict):
+        top_n_models = self.__library._mlflow_ready_output(n)
+
+        for i, model in enumerate(top_n_models):
+            with mlflow.start_run() as run:
+                for key, value in user_tags.items():
+                    mlflow.set_tag(f"{key}_{i+1}", str(value))  # add the model rank to the tag key
+
+                # Log the model's tags, params, and metrics
+                for key, value in model['tags'].items():
+                    mlflow.set_tag(key, str(value))
+                for key, value in model['params'].items():
+                    mlflow.log_param(key, value)
+                for key, value in model['metrics'].items():
+                    mlflow.log_metric(key, value)
+
+                if self.__library.log_model_type == 'sklearn':
+                    mlflow.sklearn.log_model(model['model'], "model")
+                elif self.__library.log_model_type == 'pyfunc':
+                    mlflow.pyfunc.log_model("model", model['model'])
+                elif self.__library.log_model_type == 'keras':
+                    mlflow.keras.log_model(model['model'], "model")
+                else:
+                    raise ValueError(f"Unknown model type {self.__library.log_model_type}")

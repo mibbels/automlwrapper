@@ -53,11 +53,14 @@ class AutoKerasWrapper(AutoMLLibrary):
                 directory=self.output_path,
                 **(self.config.get_params_constructor_by_key('StructuredDataClassifier') or {})
             )
+            self.log_model_type = self.config._get_mlflow_details('StructuredDataClassifier').get('__log_model_type', {})
+
         elif self.task_type == "regression":
             self.model = ak.StructuredDataRegressor(
                 directory=self.output_path,
                 **(self.config.get_params_constructor_by_key('StructuredDataRegressor') or {})
             )
+            self.log_model_type = self.config._get_mlflow_details('StructuredDataRegressor').get('__log_model_type', {})
 
         self.model.fit(
             **(self.data_preprocessing(data, target_column)),
@@ -74,11 +77,14 @@ class AutoKerasWrapper(AutoMLLibrary):
                 directory=self.output_path,
                 **(self.config.get_params_constructor_by_key('ImageClassifier') or {})
             )
+            self.log_model_type = self.config._get_mlflow_details('ImageClassifier').get('__log_model_type', {})
+
         elif self.task_type == "regression":
             self.model = ak.ImageRegressor(
                 directory=self.output_path,
                 **(self.config.get_params_constructor_by_key('ImageRegressor') or {})
             )
+            self.log_model_type = self.config._get_mlflow_details('ImageRegressor').get('__log_model_type', {})
 
         self.model.fit(
             **(self.data_preprocessing(data, target_column)),
@@ -94,10 +100,13 @@ class AutoKerasWrapper(AutoMLLibrary):
                 directory=self.output_path,
                 **(self.config.get_params_constructor_by_key('TextClassifier') or {})
             )
+            self.log_model_type = self.config._get_mlflow_details('TextClassifier').get('__log_model_type', {})
+
         elif self.task_type == "regression":
             self.model = ak.TextRegressor(
                 **(self.config.get_params_constructor_by_key('TextRegressor') or {})
             )
+            self.log_model_type = self.config._get_mlflow_details('TextRegressor').get('__log_model_type', {})
 
         self.model.fit(
             **(self.data_preprocessing(data, target_column)),
@@ -112,6 +121,7 @@ class AutoKerasWrapper(AutoMLLibrary):
             directory=self.output_path,
             **(self.config.get_params_constructor_by_key('TimeseriesForecaster') or {})
         )
+        self.log_model_type = self.config._get_mlflow_details('TimeseriesForecaster').get('__log_model_type', {})
 
         self.model.fit(
             **(self.data_preprocessing(data, target_column)),

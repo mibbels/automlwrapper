@@ -37,12 +37,15 @@ class AutoSklearnWrapper(AutoMLLibrary):
                 delete_tmp_folder_after_terminate=False,
                 **(self.config.get_params_constructor_by_key('AutoSklearnClassifier') or {})
             )
+            self.log_model_type = self.config._get_mlflow_details('AutoSklearnClassifier').get('__log_model_type', {})
+
         elif self.task_type == 'regression':
             self.model = AutoSklearnRegressor(
                 tmp_folder=self.output_path,
                 delete_tmp_folder_after_terminate=False,
                 **(self.config.get_params_constructor_by_key('AutoSklearnRegressor') or {})
             )
+            self.log_model_type = self.config._get_mlflow_details('AutoSklearnRegressor').get('__log_model_type', {})
 
         self.fit_output = self.model.fit(
             **(self._data_preprocessing(data, target_column)),
@@ -54,30 +57,37 @@ class AutoSklearnWrapper(AutoMLLibrary):
     
     #---------------------------------------------------------------------------------------------#
     def _mlflow_ready_output(self, n: int = 1):
-        df_leaderboard = self.fit_output.leaderboard()
+        df_leaderboard = self.fit_output.leaderboard(detailed=True)
+        df_leaderboard.insert(0, 'model_id', df_leaderboard.index)
+        df_leaderboard.reset_index(drop=True, inplace=True)       
+
         dict_model_info = self.fit_output.show_models()
 
         best_models_info = []
         for i in range(n):
-            model_id = df_leaderboard.loc[i, 'model_id']
+            try:
+                model_id = df_leaderboard.loc[i, 'model_id']
+            except KeyError:
+                raise ValueError(f'No {n} models found. Please try at max {len(df_leaderboard)} models.')
+                
             model_info = self._get_info_by_id(model_id, df_leaderboard, dict_model_info, flat=False)
             best_models_info.append(model_info)
 
         return best_models_info
 
     #---------------------------------------------------------------------------------------------#
-    def _get_info_by_id(self, id, leaderboard, model_info, flat: bool = False):
-        model_info_by_id = model_info[id]
+    def _get_info_by_id(self, model_id, leaderboard, model_info, flat: bool = False):
+        model_info_by_id = model_info[model_id]
         model_loss = model_info_by_id['cost']
         model_object = model_info_by_id['sklearn_classifier']
         model_name = model_object.__class__.__name__
         model_params = model_object.get_params()
-        model_data_preprocessor_name = leaderboard.loc[id, 'data_preprocessors']
-        model_feature_preprocessor_name = leaderboard.loc[id, 'feature_preprocessors']
-
+        model_data_preprocessor_name = leaderboard.loc[leaderboard['model_id'] == model_id, 'data_preprocessors'].values[0]
+        model_feature_preprocessor_name = leaderboard.loc[leaderboard['model_id'] == model_id, 'feature_preprocessors'].values[0]
+   
         if flat:
             info_by_id = {
-                'model_id': id,
+                'model_id': model_id,
                 'model_loss': model_loss,
                 'model_object': model_object,
                 'model_name': model_name,
@@ -88,7 +98,7 @@ class AutoSklearnWrapper(AutoMLLibrary):
         else:
             info_by_id = {
                 'tags': {
-                    'model_id': id,
+                    'model_id': model_id,
                     'model_name': model_name,
                     'model_data_preprocessor_name': model_data_preprocessor_name,
                     'model_feature_preprocessor_name': model_feature_preprocessor_name,
