@@ -1,0 +1,15 @@
+artifact_uri: file:///home/mibbels/sedar-masterarbeit/sedar/sedar/automl/mlruns/0/73bdd16efc8341d9bb079ddde137c31d/artifacts
+end_time: 1701256284620
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 73bdd16efc8341d9bb079ddde137c31d
+run_name: enthused-gnu-138
+run_uuid: 73bdd16efc8341d9bb079ddde137c31d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701256284608
+status: 4
+tags: []
+user_id: mibbels

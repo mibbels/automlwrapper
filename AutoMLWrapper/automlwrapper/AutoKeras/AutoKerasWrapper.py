@@ -62,7 +62,7 @@ class AutoKerasWrapper(AutoMLLibrary):
             )
             self.log_model_type = self.config._get_mlflow_details('StructuredDataRegressor').get('__log_model_type', {})
 
-        self.model.fit(
+        self.fit_output = self.model.fit(
             **(self.data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('StructuredDataClassifier' if self.task_type == 'classification' 
                                           else 'StructuredDataRegressor' if self.task_type == 'regression'
@@ -86,7 +86,7 @@ class AutoKerasWrapper(AutoMLLibrary):
             )
             self.log_model_type = self.config._get_mlflow_details('ImageRegressor').get('__log_model_type', {})
 
-        self.model.fit(
+        self.fit_output = self.model.fit(
             **(self.data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('ImageClassifier' if self.task_type == 'classification' 
                                           else 'ImageRegressor' if self.task_type == 'regression'
@@ -108,7 +108,7 @@ class AutoKerasWrapper(AutoMLLibrary):
             )
             self.log_model_type = self.config._get_mlflow_details('TextRegressor').get('__log_model_type', {})
 
-        self.model.fit(
+        self.fit_output = self.model.fit(
             **(self.data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('TextClassifier' if self.task_type == 'classification' 
                                           else 'TextRegressor' if self.task_type == 'regression'
@@ -123,7 +123,46 @@ class AutoKerasWrapper(AutoMLLibrary):
         )
         self.log_model_type = self.config._get_mlflow_details('TimeseriesForecaster').get('__log_model_type', {})
 
-        self.model.fit(
+        self.fit_output = self.model.fit(
             **(self.data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('TimeseriesForecaster') or {})
             )
+
+    #---------------------------------------------------------------------------------------------#
+    def _mlflow_ready_output(self, n: int = 1):
+        best_models_info = []
+
+        if n > 1:
+            raise ValueError(f'Library {self.__class__.__name__} does not support more than one model. Please set n=1.')
+        
+        model = self.model.export_model()
+        model_info = self._get_info_from_keras_model(model)
+        best_models_info.append(model_info)
+        
+        return best_models_info
+
+    
+    #---------------------------------------------------------------------------------------------#
+    def _get_info_from_keras_model(self, keras_model):
+
+        model_optimizer = keras_model.optimizer.get_config()
+        optimizer_info = {f"optimizer_{key}": value for key, value in model_optimizer.items()}
+
+        model_info = {
+            'tags': {},
+            'params': {
+                'epochs': len(self.fit_output.epoch),                
+            },
+            'metrics': {},
+            'artifacts': {},
+            'model': keras_model,
+        }
+
+        for key, values in self.fit_output.history.items():
+            model_info['metrics'][key] = values[-1]
+
+        for key, values in optimizer_info.items():
+            model_info['params'][key] = values
+        
+        return model_info
+

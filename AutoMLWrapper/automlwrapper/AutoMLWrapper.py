@@ -1,5 +1,5 @@
 from typing import Any, Optional, Dict
-import mlflow
+import mlflow, mlflow.sklearn, mlflow.keras, mlflow.pyfunc
 
 from .AutoGluon.AutoGluonWrapper import AutoGluonWrapper
 from .AutoKeras.AutoKerasWrapper import AutoKerasWrapper
