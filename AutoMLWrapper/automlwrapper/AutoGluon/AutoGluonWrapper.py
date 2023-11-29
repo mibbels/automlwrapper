@@ -3,8 +3,12 @@ from autogluon.multimodal import MultiModalPredictor
 from autogluon.timeseries import TimeSeriesPredictor
 
 import os
+import yaml
+import mlflow.pyfunc
 from datetime import datetime
+
 from ..AutoMLLibrary import AutoMLLibrary
+from ..ModelInfo import ModelInfo
 from .AutoGluonConfig import AutoGluonConfig
 
 class AutoGluonWrapper(AutoMLLibrary):
@@ -137,9 +141,68 @@ class AutoGluonWrapper(AutoMLLibrary):
             )
             self.log_model_type = self.config._get_mlflow_details('TimeSeriesPredictor').get('__log_model_type', {})
         
-        self.model.fit(
+        self.fit_output = self.model.fit(
             **(self.data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 
                                           else 'TabularPredictor' if self.problem_type == 'tabular' 
                                           else 'MultiModalPredictor') or {})
         )
+
+    #---------------------------------------------------------------------------------------------#
+    def _create_model_info(self, n_models: int = 1):
+
+        best_models_info = []
+        dict_summary = self.model.fit_summary(0)
+        df_leaderboard = self.model.leaderboard(silent=True)     
+        
+        for i in range(n_models):
+            try:
+                model_name = df_leaderboard.loc[i, 'model']
+            except KeyError:
+                raise ValueError(f'No {n_models} models found. Please try at max {len(df_leaderboard)} models.')
+            
+            model_info = ModelInfo(
+            **(self._get_info_from_fit_summary_tabular(model_name, df_leaderboard, dict_summary) or {})
+            )
+            
+            best_models_info.append(model_info)
+
+        return best_models_info
+    
+    #---------------------------------------------------------------------------------------------#
+    def  _get_info_from_fit_summary_tabular(self, model_name, df_leaderboard, dict_summary):
+
+        model_info_args = {
+            'model_name': dict_summary['model_types'].get(model_name, None),
+            'model_type': self.log_model_type,
+            'model_object': self._define_pyfunc_model(),
+            'model_path': self.output_path + 'models/',
+            'model_params_dict': dict_summary['model_hyperparams'].get(model_name, {}),
+            'model_metrics_dict': {
+                'val_score': df_leaderboard.loc[df_leaderboard['model'] == model_name, 'score_val'].values[0]
+            },
+            'model_tags_dict': {},
+        }
+
+        return model_info_args
+        
+      
+    #---------------------------------------------------------------------------------------------#
+    def _get_info_from_config_yaml(self):
+            # read self.output_path + config.yaml
+            with open(self.output_path + 'config.yaml') as file:
+                out_config = yaml.load(file, Loader=yaml.FullLoader)
+
+    #---------------------------------------------------------------------------------------------#
+    def _define_pyfunc_model(self):
+        
+        class autogluon_model(mlflow.pyfunc.PythonModel):
+            def __init__(self, model):
+                self.model = model
+
+            def predict(self, context, model_input):
+                return self.model.predict(model_input)
+
+        return autogluon_model(self.model)        
+        
+    

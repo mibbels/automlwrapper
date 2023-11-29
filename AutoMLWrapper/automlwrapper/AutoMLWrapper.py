@@ -1,9 +1,11 @@
 from typing import Any, Optional, Dict
-import mlflow, mlflow.sklearn, mlflow.keras, mlflow.pyfunc
+import mlflow, mlflow.sklearn, mlflow.keras, mlflow.pyfunc, mlflow.gluon
 
 from .AutoGluon.AutoGluonWrapper import AutoGluonWrapper
 from .AutoKeras.AutoKerasWrapper import AutoKerasWrapper
 from .AutoSklearn.AutoSklearnWrapper import AutoSklearnWrapper
+from .ModelInfo import ModelInfo
+from .MLflowHandler import MLflowHandler
 
 class AutoMLWrapper:
     __slots__ = ['__library', '__library_name', '__is_initialized', '__out_path']
@@ -133,56 +135,25 @@ class AutoMLWrapper:
             raise ValueError("You must call 'train' before 'output'")
 
         if outputForMLFlow:
-            return self.__library._mlflow_ready_output(nBestModels)
+            return self.__library._create_model_info(nBestModels)
         else:
             pass
     
     #---------------------------------------------------------------------------------------------#
     def MlflowUploadBest(self, user_tags: dict):
-        best_model = self.__library._mlflow_ready_output(1)[0]  # assuming the best model is at index 0
+        best_model_info = self.__library._create_model_info(1)[0]  
 
-        with mlflow.start_run() as run:
-            for key, value in user_tags.items():
-                mlflow.set_tag(key, str(value))
+        if not best_model_info:
+            return
 
-            for key, value in best_model['tags'].items():
-                mlflow.set_tag(key, str(value))
-            for key, value in best_model['params'].items():
-                mlflow.log_param(key, value)
-            for key, value in best_model['metrics'].items():
-                mlflow.log_metric(key, value)
-
-            if self.__library.log_model_type == 'sklearn':
-                mlflow.sklearn.log_model(best_model['model'], "model")
-            elif self.__library.log_model_type == 'pyfunc':
-                mlflow.pyfunc.log_model("model", python_model=best_model['model'])
-            elif self.__library.log_model_type == 'keras':
-                mlflow.keras.log_model(best_model['model'], "model")
-            else:
-                raise ValueError(f"Unknown model type {self.__library.log_model_type}")
+        mlflow_handler = MLflowHandler(best_model_info, user_tags, self.__out_path)
+        mlflow_handler.log_to_mlflow()    
 
     #---------------------------------------------------------------------------------------------#
     def MlflowUploadTopN(self, n: int, user_tags: dict):
-        top_n_models = self.__library._mlflow_ready_output(n)
+        top_n_models_info = self.__library._create_model_info(n)
 
-        for i, model in enumerate(top_n_models):
-            with mlflow.start_run() as run:
-                for key, value in user_tags.items():
-                    mlflow.set_tag(f"{key}_{i+1}", str(value))  # add the model rank to the tag key
-
-                # Log the model's tags, params, and metrics
-                for key, value in model['tags'].items():
-                    mlflow.set_tag(key, str(value))
-                for key, value in model['params'].items():
-                    mlflow.log_param(key, value)
-                for key, value in model['metrics'].items():
-                    mlflow.log_metric(key, value)
-
-                if self.__library.log_model_type == 'sklearn':
-                    mlflow.sklearn.log_model(model['model'], "model")
-                elif self.__library.log_model_type == 'pyfunc':
-                    mlflow.pyfunc.log_model("model", model['model'])
-                elif self.__library.log_model_type == 'keras':
-                    mlflow.keras.log_model(model['model'], "model")
-                else:
-                    raise ValueError(f"Unknown model type {self.__library.log_model_type}")
+        for i, model_info in enumerate(top_n_models_info):
+   
+            mlflow_handler = MLflowHandler(model_info, user_tags, self.__out_path)
+            mlflow_handler.log_to_mlflow() 

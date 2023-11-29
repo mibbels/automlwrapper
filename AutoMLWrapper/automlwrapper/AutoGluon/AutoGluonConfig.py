@@ -12,4 +12,12 @@ class AutoGluonConfig(Configuration):
 
     #---------------------------------------------------------------------------------------------#
     def get_params_fit_by_key(self, key):
-        return self.map_user_params(func_type='fit', model_type=key, user_hyperparameters=self.user_hyperparameters)
+        params = self.map_user_params(func_type='fit', model_type=key, user_hyperparameters=self.user_hyperparameters)
+        
+        try:
+            params['hyperparameter_tune_kwargs']['scheduler'] = 'local'
+            params['hyperparameter_tune_kwargs']['searcher'] = 'auto'
+        except:
+            pass
+        
+        return params

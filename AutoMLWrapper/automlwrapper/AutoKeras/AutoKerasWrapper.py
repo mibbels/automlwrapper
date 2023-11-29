@@ -3,6 +3,7 @@ import autokeras as ak
 from datetime import datetime
 import os
 from ..AutoMLLibrary import AutoMLLibrary
+from ..ModelInfo import ModelInfo
 from .AutoKerasConfig import AutoKerasConfig
 
 
@@ -129,14 +130,17 @@ class AutoKerasWrapper(AutoMLLibrary):
             )
 
     #---------------------------------------------------------------------------------------------#
-    def _mlflow_ready_output(self, n: int = 1):
+    def _create_model_info(self, n: int = 1):
         best_models_info = []
 
         if n > 1:
             raise ValueError(f'Library {self.__class__.__name__} does not support more than one model. Please set n=1.')
         
         model = self.model.export_model()
-        model_info = self._get_info_from_keras_model(model)
+        model_info = ModelInfo(
+            **(self._get_info_from_keras_model(model))
+        )
+
         best_models_info.append(model_info)
         
         return best_models_info
@@ -147,22 +151,19 @@ class AutoKerasWrapper(AutoMLLibrary):
 
         model_optimizer = keras_model.optimizer.get_config()
         optimizer_info = {f"optimizer_{key}": value for key, value in model_optimizer.items()}
+        metrics_info = {key : value[-1] for key, value in self.fit_output.history.items()}
 
-        model_info = {
-            'tags': {},
-            'params': {
-                'epochs': len(self.fit_output.epoch),                
-            },
-            'metrics': {},
-            'artifacts': {},
-            'model': keras_model,
+        optimizer_info['epochs'] = len(self.fit_output.epoch)
+        
+        model_info_args = {
+            'model_name': 'x',
+            'model_type': self.log_model_type,
+            'model_object': keras_model,
+            'model_path': None,
+            'model_params_dict': optimizer_info,
+            'model_metrics_dict': metrics_info,
+            'model_tags_dict':{},
         }
 
-        for key, values in self.fit_output.history.items():
-            model_info['metrics'][key] = values[-1]
-
-        for key, values in optimizer_info.items():
-            model_info['params'][key] = values
-        
-        return model_info
+        return model_info_args
 

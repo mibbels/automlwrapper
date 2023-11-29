@@ -145,5 +145,5 @@ class AutoMLLibrary:
         raise NotImplementedError
 
     #---------------------------------------------------------------------------------------------# 
-    def _mlflow_ready_output(self, n: int = 1) -> List[Dict[str, Any]]:
+    def _create_model_info(self, n: int = 1) -> List[Dict[str, Any]]:
         raise NotImplementedError
