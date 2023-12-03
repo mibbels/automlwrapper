@@ -1,6 +1,6 @@
 ImageClassifier:
   __mlflow:
-    __log_model_type: keras
+    __log_model_type: pyfunc
   __data_types:
     image:
       __task_type:
@@ -27,7 +27,7 @@ ImageClassifier:
 
 ImageRegressor:
   __mlflow:
-    __log_model_type: keras
+    __log_model_type: pyfunc
   __data_types:
     image:
       __task_type:
@@ -53,7 +53,7 @@ ImageRegressor:
 
 TextClassifier:
   __mlflow:
-    __log_model_type: keras
+    __log_model_type: pyfunc
   __data_types:
     text:
       __task_type:
@@ -80,7 +80,7 @@ TextClassifier:
 
 TextRegressor:
   __mlflow:
-    __log_model_type: keras
+    __log_model_type: pyfunc
   __data_types:
     text:
       __task_type:
@@ -106,7 +106,7 @@ TextRegressor:
 
 StructuredDataClassifier:
   __mlflow:
-    __log_model_type: keras
+    __log_model_type: pyfunc
   __data_types:
     tabular:
       __task_type:
@@ -133,7 +133,7 @@ StructuredDataClassifier:
 
 StructuredDataRegressor:
   __mlflow:
-    __log_model_type: keras
+    __log_model_type: pyfunc
   __data_types:
     tabular:
       __task_type:
@@ -159,7 +159,7 @@ StructuredDataRegressor:
 
 TimeseriesForecaster:
   __mlflow:
-    __log_model_type: keras
+    __log_model_type: pyfunc
   __data_types:
     time_series:
       __task_type:

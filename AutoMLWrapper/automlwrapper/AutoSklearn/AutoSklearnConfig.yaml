@@ -1,6 +1,6 @@
 AutoSklearnClassifier:
   __mlflow:
-    __log_model_type: sklearn
+    __log_model_type: pyfunc
   __data_types:
     tabular:
       __task_type:
@@ -34,7 +34,7 @@ AutoSklearnClassifier:
 
 AutoSklearnRegressor:
   __mlflow:
-    __log_model_type: sklearn
+    __log_model_type: pyfunc
   __data_types:
     tabular:
       __task_type:

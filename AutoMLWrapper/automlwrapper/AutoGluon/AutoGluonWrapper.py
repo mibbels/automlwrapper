@@ -9,6 +9,7 @@ from datetime import datetime
 
 from ..AutoMLLibrary import AutoMLLibrary
 from ..ModelInfo import ModelInfo
+from ..PyfuncModel import PyfuncModel
 from .AutoGluonConfig import AutoGluonConfig
 
 class AutoGluonWrapper(AutoMLLibrary):
@@ -45,7 +46,7 @@ class AutoGluonWrapper(AutoMLLibrary):
                     self.autogluon_problem_type = 'binary'
                 elif self.problem_type == 'multiclass':
                     self.autogluon_problem_type = 'multiclass'
-                if self.problem_type == 'zero-shot':
+                elif self.problem_type == 'zero-shot':
                     self.autogluon_problem_type = 'zero_shot_image_classification'
                 else:
                     raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
@@ -152,30 +153,34 @@ class AutoGluonWrapper(AutoMLLibrary):
     def _create_model_info(self, n_models: int = 1):
 
         best_models_info = []
-        dict_summary = self.model.fit_summary(0)
-        df_leaderboard = self.model.leaderboard(silent=True)     
-        
         for i in range(n_models):
-            try:
-                model_name = df_leaderboard.loc[i, 'model']
-            except KeyError:
-                raise ValueError(f'No {n_models} models found. Please try at max {len(df_leaderboard)} models.')
-            
-            model_info = ModelInfo(
-            **(self._get_info_from_fit_summary_tabular(model_name, df_leaderboard, dict_summary) or {})
-            )
-            
+            if self.data_type in ['tabular', 'timeseries']:
+                model_info = ModelInfo(
+                    **(self._get_info_from_fit_summary_tabular(i) or {})
+                )
+            elif self.data_type in ['image', 'text']:
+                model_info = ModelInfo(
+                    **(self._get_info_from_config_yaml() or {})
+                )
+
             best_models_info.append(model_info)
 
         return best_models_info
     
     #---------------------------------------------------------------------------------------------#
-    def  _get_info_from_fit_summary_tabular(self, model_name, df_leaderboard, dict_summary):
+    def  _get_info_from_fit_summary_tabular(self, n_th_model):
 
+        dict_summary = self.model.fit_summary(0)
+        df_leaderboard = self.model.leaderboard(silent=True)
+        try:
+            model_name = df_leaderboard.loc[n_th_model, 'model']
+        except KeyError:
+            raise ValueError(f'No more than {n_th_model-1} models found. Please try at max {len(df_leaderboard)} models.')
+                    
         model_info_args = {
             'model_name': dict_summary['model_types'].get(model_name, None),
-            'model_type': self.log_model_type,
-            'model_object': self._define_pyfunc_model(),
+            'model_library': 'autogluon',
+            'model_object': PyfuncModel('autogluon', self.model),
             'model_path': self.output_path + 'models/',
             'model_params_dict': dict_summary['model_hyperparams'].get(model_name, {}),
             'model_metrics_dict': {
@@ -189,9 +194,25 @@ class AutoGluonWrapper(AutoMLLibrary):
       
     #---------------------------------------------------------------------------------------------#
     def _get_info_from_config_yaml(self):
-            # read self.output_path + config.yaml
-            with open(self.output_path + 'config.yaml') as file:
-                out_config = yaml.load(file, Loader=yaml.FullLoader)
+        with open(self.output_path + '/config.yaml') as file:
+            out_config = yaml.load(file, Loader=yaml.FullLoader)
+        
+        with open(self.output_path + '/hparams.yaml') as file:
+            hparams = yaml.load(file, Loader=yaml.FullLoader)
+        
+        model_name = out_config['model'].get('names', ['neural net ' + self.data_type + ' ' + self.task_type])[0]
+        
+        model_info_args = {
+            'model_name': model_name,
+            'model_library': 'autogluon',
+            'model_object': PyfuncModel('autogluon', self.model),
+            'model_path': self.output_path + 'models/',
+            'model_params_dict': {k: v for k, v in hparams.items() if v is not None}, #out_config.get('optimization', {}),
+            'model_metrics_dict': self.model.fit_summary(0),
+            'model_tags_dict': {'checkpoint_name': out_config['model'].get(model_name, {}).get('checkpoint_name', '')},
+        }
+
+        return model_info_args
 
     #---------------------------------------------------------------------------------------------#
     def _define_pyfunc_model(self):

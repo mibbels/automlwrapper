@@ -1,9 +1,13 @@
 import autokeras as ak
+import keras
 
 from datetime import datetime
 import os
+from PIL import Image
+import numpy as np
 from ..AutoMLLibrary import AutoMLLibrary
 from ..ModelInfo import ModelInfo
+from ..PyfuncModel import PyfuncModel
 from .AutoKerasConfig import AutoKerasConfig
 
 
@@ -153,16 +157,22 @@ class AutoKerasWrapper(AutoMLLibrary):
         optimizer_info = {f"optimizer_{key}": value for key, value in model_optimizer.items()}
         metrics_info = {key : value[-1] for key, value in self.fit_output.history.items()}
 
+        keras.utils.plot_model(keras_model, to_file=self.output_path + '/model_img.png',
+                                show_shapes=True, show_layer_names=True)
+        
+        model_img = Image.open(self.output_path + '/model_img.png')
+
         optimizer_info['epochs'] = len(self.fit_output.epoch)
         
         model_info_args = {
-            'model_name': 'x',
-            'model_type': self.log_model_type,
-            'model_object': keras_model,
+            'model_name': 'neural net ' + self.data_type + ' ' + self.task_type,
+            'model_library': 'autokeras',
+            'model_object': PyfuncModel('autokeras', keras_model),
             'model_path': None,
-            'model_params_dict': optimizer_info,
+            'model_params_dict': {k: v for k, v in optimizer_info.items() if v is not None},
             'model_metrics_dict': metrics_info,
             'model_tags_dict':{},
+            'model_imgs_as_pil_dict': {'network_structure.png': model_img},
         }
 
         return model_info_args

@@ -6,6 +6,7 @@ from datetime import datetime
 
 from ..AutoMLLibrary import AutoMLLibrary
 from ..ModelInfo import ModelInfo
+from ..PyfuncModel import PyfuncModel
 from .AutoSklearnConfig import AutoSklearnConfig
 
 class AutoSklearnWrapper(AutoMLLibrary):
@@ -85,14 +86,16 @@ class AutoSklearnWrapper(AutoMLLibrary):
         model_info_by_id = model_info[model_id]
         model_data_preprocessor_name = leaderboard.loc[leaderboard['model_id'] == model_id, 'data_preprocessors'].values[0]
         model_feature_preprocessor_name = leaderboard.loc[leaderboard['model_id'] == model_id, 'feature_preprocessors'].values[0]
-   
 
+        _tmp_model_key = 'classifier' if self.task_type == 'classification' else 'regressor' if self.task_type == 'regression' else ValueError('No task type set.')
+
+        hparams = model_info_by_id['sklearn_' + _tmp_model_key].get_params()
         model_info_args = {
-            'model_name': model_info_by_id['sklearn_classifier'].__class__.__name__,
-            'model_type': self.log_model_type,
-            'model_object': model_info_by_id['sklearn_classifier'],
+            'model_name': model_info_by_id['sklearn_' + _tmp_model_key].__class__.__name__,
+            'model_library': 'autosklearn',
+            'model_object': PyfuncModel('autosklearn', self.model),
             'model_path': None,
-            'model_params_dict': model_info_by_id['sklearn_classifier'].get_params(),
+            'model_params_dict': {k: v for k, v in hparams.items() if v is not None},
             'model_metrics_dict': {
                 'model_loss': model_info_by_id['cost'],
             },

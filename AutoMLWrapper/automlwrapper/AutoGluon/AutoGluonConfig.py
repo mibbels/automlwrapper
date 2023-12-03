@@ -17,6 +17,7 @@ class AutoGluonConfig(Configuration):
         try:
             params['hyperparameter_tune_kwargs']['scheduler'] = 'local'
             params['hyperparameter_tune_kwargs']['searcher'] = 'auto'
+            params['column_types'] = {'image': 'image_bytearray', 'label': 'categorical'}
         except:
             pass
         

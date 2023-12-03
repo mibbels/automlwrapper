@@ -4,10 +4,11 @@ from .ModelInfo import ModelInfo
 
 class MLflowHandler:
     #---------------------------------------------------------------------------------------------#
-    def __init__(self, model_info: ModelInfo, user_tags: Dict[str, Any], output_path: str):
+    def __init__(self, model_info: ModelInfo, user_tags: Dict[str, Any], output_path: str, pf = None):
         self.model_info = model_info
         self.user_tags = user_tags
         self.output_path = output_path
+        self.pf = pf
 
     #---------------------------------------------------------------------------------------------#
     def log_to_mlflow(self):
@@ -23,14 +24,7 @@ class MLflowHandler:
                 mlflow.log_param(key, value)
             for key, value in model_info_dict['metrics'].items():
                 mlflow.log_metric(key, value)
+            for key, value in model_info_dict['images'].items():
+                mlflow.log_image(value, key)
 
-            if self.model_info.model_type == 'sklearn':
-                mlflow.sklearn.log_model(self.model_info.model_object, "model")
-            elif self.model_info.model_type == 'pyfunc':
-                mlflow.pyfunc.log_model("model", python_model=self.model_info.model_object)
-            elif self.model_info.model_type == 'keras':
-                mlflow.keras.log_model(self.model_info.model_object, "model")
-            elif self.model_info.model_type == 'gluon':
-                mlflow.gluon.log_model(self.model_info.model_object, "model")
-            else:
-                raise ValueError(f"Unknown model type {self.model_info.model_type}")
+            mlflow.pyfunc.log_model("model", python_model=self.model_info.model_object)
