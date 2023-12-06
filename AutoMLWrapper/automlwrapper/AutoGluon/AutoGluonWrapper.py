@@ -156,7 +156,7 @@ class AutoGluonWrapper(AutoMLLibrary):
         for i in range(n_models):
             if self.data_type in ['tabular', 'timeseries']:
                 model_info = ModelInfo(
-                    **(self._get_info_from_fit_summary_tabular(i) or {})
+                    **(self._get_info_from_fit_summary(i) or {})
                 )
             elif self.data_type in ['image', 'text']:
                 model_info = ModelInfo(
@@ -168,7 +168,7 @@ class AutoGluonWrapper(AutoMLLibrary):
         return best_models_info
     
     #---------------------------------------------------------------------------------------------#
-    def  _get_info_from_fit_summary_tabular(self, n_th_model):
+    def  _get_info_from_fit_summary(self, n_th_model):
 
         dict_summary = self.model.fit_summary(0)
         df_leaderboard = self.model.leaderboard(silent=True)
