@@ -91,6 +91,8 @@ class AutoMLLibrary:
             return self._separate_x_y_df(data, target)
         elif type == 'numpy':
             return self._separate_x_y_np(data, target)
+        elif type == 'tuple':
+            return self._seperate_x_y_tuple(data, target)
         else:
             raise Exception(f'Unknown type {type}')
 
@@ -106,6 +108,11 @@ class AutoMLLibrary:
             train_data, test_data = self._split_test_train_np(data, ratio)
             X_train, y_train = self._separate_x_y_np(train_data, target_column=target)
             X_test, y_test = self._separate_x_y_np(test_data, target_column=target)
+            return X_train, y_train, X_test, y_test
+        elif type == 'tuple':
+            train_data, test_data = self._split_test_train_tuple(data, ratio)
+            X_train, y_train = self._seperate_x_y_tuple(train_data, target_column=target)
+            X_test, y_test = self._seperate_x_y_tuple(test_data, target_column=target)
             return X_train, y_train, X_test, y_test
         else:
             raise Exception(f'Unknown type {type}')
@@ -128,9 +135,21 @@ class AutoMLLibrary:
 
     #---------------------------------------------------------------------------------------------#
     def _separate_x_y_np(self, data: np.ndarray, target_column_idx: int) -> Tuple[np.ndarray, np.ndarray]:
+        
+        if isinstance(target_column_idx, str):
+            target_column_idx = -1
         X = np.delete(data, target_column_idx, axis=1)
         y = data[:, target_column_idx]
-        return X, y    
+        return X, y  
+
+    #---------------------------------------------------------------------------------------------#
+    def _split_test_train_tuple(self, data: Tuple[np.ndarray, np.ndarray], test_size: float = 0.2) -> Tuple[np.ndarray, np.ndarray]:
+        train_data, test_data = train_test_split(data[0], data[1], test_size=test_size, random_state=42)
+        return train_data, test_data
+    
+    #---------------------------------------------------------------------------------------------#
+    def _seperate_x_y_tuple(self, data, target_column):
+        return data[0], data[1]  
 
     #=============================================================================================#
     

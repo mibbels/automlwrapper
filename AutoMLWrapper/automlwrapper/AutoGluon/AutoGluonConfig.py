@@ -15,9 +15,10 @@ class AutoGluonConfig(Configuration):
         params = self.map_user_params(func_type='fit', model_type=key, user_hyperparameters=self.user_hyperparameters)
         
         try:
-            params['hyperparameter_tune_kwargs']['scheduler'] = 'local'
-            params['hyperparameter_tune_kwargs']['searcher'] = 'auto'
-            params['column_types'] = {'image': 'image_bytearray', 'label': 'categorical'}
+            #params['hyperparameter_tune_kwargs']['scheduler'] = 'local'
+            #params['hyperparameter_tune_kwargs']['searcher'] = 'auto'
+            # remove ['hyperparameter_tune_kwargs']['num_trials']
+            params['hyperparameter_tune_kwargs'].pop('num_trials', None)
         except:
             pass
         

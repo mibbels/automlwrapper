@@ -31,7 +31,7 @@ class AutoKerasWrapper(AutoMLLibrary):
             x, y = self.separate(data, target, type='pandas')
 
         elif self.data_type == 'image' or self.data_type == 'text':
-            x,y = self.separate(data, target, type='numpy')
+            x,y = self.separate(data, target, type='tuple')
         
         return {'x': x, 'y': y}
     
