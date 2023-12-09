@@ -31,6 +31,13 @@ class AutoMLWrapper:
         self.__library._set_custom_data_preprocessing(custom_preprocessing_func)
 
     #---------------------------------------------------------------------------------------------#
+    def AllowExtraHyperparameters(self, extra_allowed_hyperparameters: list):
+        """
+        Set extra hyperparameters as a list, that are not present in the config file.
+        """
+        self.__library._set_extra_allowed_hyperparameters(extra_allowed_hyperparameters)
+
+    #---------------------------------------------------------------------------------------------#
     @property
     def _library(self) -> Any:
         return self.__library

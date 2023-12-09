@@ -1,7 +1,7 @@
 import yaml
 
 class Configuration:
-    __slots__ = ['config', 'user_hyperparameters']
+    __slots__ = ['config', 'user_hyperparameters', '__extra_allowed_hyperparameters']
     #---------------------------------------------------------------------------------------------#
     def __init__(self, config_file_path):
         self.config = self._load_config(config_file_path)
@@ -14,6 +14,13 @@ class Configuration:
     #---------------------------------------------------------------------------------------------#
     def map_hyperparameters(self, user_hyperparameters: dict):
         self.user_hyperparameters = user_hyperparameters
+    
+    #---------------------------------------------------------------------------------------------#
+    def set_extra_allowed_hyperparameters(self, extra_allowed_hyperparameters: list):
+        if not isinstance(extra_allowed_hyperparameters, list):
+            print("extra_allowed_hyperparameters must be a list")
+            return
+        self.__extra_allowed_hyperparameters = extra_allowed_hyperparameters
 
     #---------------------------------------------------------------------------------------------#
     def _get_hyperparameter_details(self, func_type: str = None, model_type: str = None):
@@ -48,7 +55,7 @@ class Configuration:
                         hyperparameters[extra_hp_name] = extra_args
             else:
                 user_key = hp_value.get('__user_mapping')
-                if user_key in user_hyperparameters:
+                if user_key in user_hyperparameters or user_key in self.__extra_allowed_hyperparameters:
                     hyperparameters[hp_key] = user_hyperparameters[user_key]
 
         return hyperparameters
@@ -63,6 +70,6 @@ class Configuration:
             if param_name.startswith('__'):
                 continue
             user_key = param_details.get('__user_mapping')
-            if user_key in user_hyperparameters:
+            if user_key in user_hyperparameters or user_key in self.__extra_allowed_hyperparameters:
                 mapped_params[param_name] = user_hyperparameters[user_key]
         return mapped_params

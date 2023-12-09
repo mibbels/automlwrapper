@@ -7,6 +7,6 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     package_data={
-        'automlwrapper': ['AutoGluon/*.yaml', 'AutoSklearn/*.yaml', 'AutoKeras/*.yaml'],
+        'automlwrapper': ['AutoGluon/*.yaml', 'AutoSklearn/*.yaml', 'AutoKeras/*.yaml', './*.yaml'],
     },
 )
