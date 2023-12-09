@@ -1,14 +1,6 @@
 ImageClassifier:
   __mlflow:
     __log_model_type: pyfunc
-  __data_types:
-    image:
-      __task_type:
-        classification:
-          __problem_types:
-            - binary
-            - multiclass
-            - multilabel
   __hyperparameter_details:
     constructor:
       max_trials:
@@ -28,13 +20,6 @@ ImageClassifier:
 ImageRegressor:
   __mlflow:
     __log_model_type: pyfunc
-  __data_types:
-    image:
-      __task_type:
-        regression:
-          __problem_types:
-            - regression
-            - multioutput
   __hyperparameter_details:
     constructor:
       max_trials: 
@@ -54,14 +39,6 @@ ImageRegressor:
 TextClassifier:
   __mlflow:
     __log_model_type: pyfunc
-  __data_types:
-    text:
-      __task_type:
-        classification:
-          __problem_types:
-            - binary
-            - multiclass
-            - multilabel
   __hyperparameter_details:
     constructor:
       max_trials: 
@@ -81,13 +58,6 @@ TextClassifier:
 TextRegressor:
   __mlflow:
     __log_model_type: pyfunc
-  __data_types:
-    text:
-      __task_type:
-        regression:
-          __problem_types:
-            - regression
-            - multioutput
   __hyperparameter_details:
     constructor:
       max_trials: 
@@ -107,14 +77,6 @@ TextRegressor:
 StructuredDataClassifier:
   __mlflow:
     __log_model_type: pyfunc
-  __data_types:
-    tabular:
-      __task_type:
-        classification:
-          __problem_types:
-            - binary
-            - multiclass
-            - multilabel
   __hyperparameter_details:
     constructor:
       max_trials: 
@@ -134,13 +96,6 @@ StructuredDataClassifier:
 StructuredDataRegressor:
   __mlflow:
     __log_model_type: pyfunc
-  __data_types:
-    tabular:
-      __task_type:
-        regression:
-          __problem_types:
-            - regression
-            - multioutput
   __hyperparameter_details:
     constructor:
       max_trials: 
@@ -160,12 +115,6 @@ StructuredDataRegressor:
 TimeseriesForecaster:
   __mlflow:
     __log_model_type: pyfunc
-  __data_types:
-    time_series:
-      __task_type:
-        forecast:
-          __problem_types:
-            - forecast
   __hyperparameter_details:
     constructor:
       max_trials: 

@@ -12,4 +12,15 @@ class AutoSklearnConfig(Configuration):
 
     #---------------------------------------------------------------------------------------------#
     def get_params_fit_by_key(self, key):
-        return self.map_user_params(func_type='fit', model_type=key, user_hyperparameters=self.user_hyperparameters)
+        params = self.map_user_params(func_type='fit', model_type=key, user_hyperparameters=self.user_hyperparameters)
+
+        """
+            memory_limit default 3072 MB produces error.
+            n_jobs < 5 produces error.
+        """
+
+        if params.get('n_jobs', 0) < 5 and params.get('memory_limit', 0) < 6000:
+            params['memory_limit'] = 6000
+            params['n_jobs'] = 5
+
+        return params

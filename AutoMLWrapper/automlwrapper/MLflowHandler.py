@@ -12,6 +12,8 @@ class MLflowHandler:
 
     #---------------------------------------------------------------------------------------------#
     def log_to_mlflow(self):
+
+        run_ids = []
         with mlflow.start_run() as run:
             for key, value in self.user_tags.items():
                 mlflow.set_tag(key, str(value))
@@ -28,3 +30,7 @@ class MLflowHandler:
                 mlflow.log_image(value, key)
 
             mlflow.pyfunc.log_model("model", python_model=self.model_info.model_object)
+
+            run_ids.append(run.info.run_id)
+        
+        return run_ids

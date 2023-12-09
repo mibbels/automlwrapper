@@ -147,13 +147,17 @@ class AutoMLWrapper:
             return
 
         mlflow_handler = MLflowHandler(best_model_info, user_tags, self.__out_path)
-        mlflow_handler.log_to_mlflow()    
+        return mlflow_handler.log_to_mlflow()    
 
     #---------------------------------------------------------------------------------------------#
     def MlflowUploadTopN(self, n: int, user_tags: dict):
         top_n_models_info = self.__library._create_model_info(n)
 
+        run_ids = []
         for i, model_info in enumerate(top_n_models_info):
    
             mlflow_handler = MLflowHandler(model_info, user_tags, self.__out_path)
-            mlflow_handler.log_to_mlflow() 
+            run_ids.append(mlflow_handler.log_to_mlflow())
+
+        return run_ids 
+

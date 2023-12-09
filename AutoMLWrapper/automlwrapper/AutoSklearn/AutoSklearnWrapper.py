@@ -100,7 +100,6 @@ class AutoSklearnWrapper(AutoMLLibrary):
                 'model_loss': model_info_by_id['cost'],
             },
             'model_tags_dict':{
-                'model_id': model_id,
                 'model_data_preprocessor_name': model_data_preprocessor_name,
                 'model_feature_preprocessor_name': model_feature_preprocessor_name,
             },

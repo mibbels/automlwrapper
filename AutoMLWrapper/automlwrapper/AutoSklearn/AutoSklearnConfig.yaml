@@ -1,14 +1,6 @@
 AutoSklearnClassifier:
   __mlflow:
     __log_model_type: pyfunc
-  __data_types:
-    tabular:
-      __task_type:
-        classification:
-          __problem_types:
-            - binary
-            - multiclass
-            - multilabel
   __hyperparameter_details:
     constructor:
       time_left_for_this_task:
@@ -35,13 +27,6 @@ AutoSklearnClassifier:
 AutoSklearnRegressor:
   __mlflow:
     __log_model_type: pyfunc
-  __data_types:
-    tabular:
-      __task_type:
-          regression:
-            __problem_types:
-              - regression
-              - multioutput
   __hyperparameter_details:
     constructor:
       time_left_for_this_task:
