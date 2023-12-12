@@ -6,7 +6,7 @@ class ModelInfo:
                   model_metrics_dict, model_tags_dict, model_path = None,
                     model_imgs_as_pil_dict = {}):
         self.model_name = model_name
-        self.model_type = model_library
+        self.model_library = model_library
         self.model_object = model_object
         self.model_path = model_path
         self.model_params_dict = model_params_dict
@@ -19,7 +19,7 @@ class ModelInfo:
         return {
             'tags': {
                 'model_name': self.model_name,
-                'model_library': self.model_type,
+                'model_library': self.model_library,
                 **(self.model_tags_dict or {})
             },
             'params': self.model_params_dict,

@@ -9,16 +9,29 @@ AutoGluon:
                 - binary
                 - multiclass
                 - zero-shot
+            few-shot-classification:
+              __problem_types:
+                - binary
+                - multiclass
+            zero-shot-classification:
+              __problem_types:
+                - binary
+                - multiclass
             regression:
               __problem_types:
                 - regression
             object-detection:
               __problem_types:
                 - object-detection
-                - zero-shot
+            zero-shot-object-detection:
+              __problem_types:
+                - object-detection
             similarity:
               __problem_types:
                 - similarity
+            segmentation:
+              __problem_types:
+                - segmentation
         text:
           __task_types:
             similarity:
@@ -28,7 +41,10 @@ AutoGluon:
               __problem_types:
                 - binary
                 - multiclass
-                - few-shot
+            few-shot-classification:
+              __problem_types:
+                - binary
+                - multiclass
     TabularPredictor:
       __data_types:
         tabular:

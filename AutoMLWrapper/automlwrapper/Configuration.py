@@ -5,6 +5,8 @@ class Configuration:
     #---------------------------------------------------------------------------------------------#
     def __init__(self, config_file_path):
         self.config = self._load_config(config_file_path)
+        self.user_hyperparameters = {}
+        self.__extra_allowed_hyperparameters = []
 
     #---------------------------------------------------------------------------------------------#
     def _load_config(self, config_file_path):

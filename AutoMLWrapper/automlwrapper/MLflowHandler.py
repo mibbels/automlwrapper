@@ -4,11 +4,9 @@ from .ModelInfo import ModelInfo
 
 class MLflowHandler:
     #---------------------------------------------------------------------------------------------#
-    def __init__(self, model_info: ModelInfo, user_tags: Dict[str, Any], output_path: str, pf = None):
+    def __init__(self, model_info: ModelInfo, user_tags: Dict[str, Any]):
         self.model_info = model_info
         self.user_tags = user_tags
-        self.output_path = output_path
-        self.pf = pf
 
     #---------------------------------------------------------------------------------------------#
     def log_to_mlflow(self):

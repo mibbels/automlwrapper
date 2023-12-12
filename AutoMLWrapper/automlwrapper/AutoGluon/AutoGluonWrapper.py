@@ -46,7 +46,21 @@ class AutoGluonWrapper(AutoMLLibrary):
                     self.autogluon_problem_type = 'binary'
                 elif self.problem_type == 'multiclass':
                     self.autogluon_problem_type = 'multiclass'
-                elif self.problem_type == 'zero-shot':
+                else:
+                    raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
+            
+            elif self.task_type == 'few-shot-classification':
+                if self.problem_type == 'binary':
+                    self.autogluon_problem_type = 'few_shot_classification'
+                elif self.problem_type == 'multiclass':
+                    self.autogluon_problem_type = 'few_shot_classification'
+                else:
+                    raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
+            
+            elif self.task_type == 'zero-shot-classification':
+                if self.problem_type == 'binary':
+                    self.autogluon_problem_type = 'zero_shot_image_classification'
+                elif self.problem_type == 'multiclass':
                     self.autogluon_problem_type = 'zero_shot_image_classification'
                 else:
                     raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
@@ -57,11 +71,15 @@ class AutoGluonWrapper(AutoMLLibrary):
                 else:
                     raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
             
-            elif self.task_type == 'object_detection':
-                if self.problem_type == 'object_detection':
+            elif self.task_type == 'object-detection':
+                if self.problem_type == 'object-detection':
                     self.autogluon_problem_type = 'object_detection'
-                elif self.problem_type == 'zero-shot':
-                    self.autogluon_problem_type == 'open_vocabulry_object_detection'
+                else:
+                    raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
+
+            elif self.task_type == 'zero-shot-object-detection':
+                if self.problem_type == 'object-detection': 
+                    self.autogluon_problem_type = 'open_vocabulary_object_detection'
                 else:
                     raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
             
@@ -70,7 +88,13 @@ class AutoGluonWrapper(AutoMLLibrary):
                     self.autogluon_problem_type = 'image_similarity'
                 else:
                     raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
-        
+            
+            elif self.task_type == 'segmentation':
+                if self.problem_type == 'segmentation':
+                    self.autogluon_problem_type = 'semantic_segmentation'
+                else:
+                    raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
+
         elif self.data_type == 'text':
             if self.task_type == 'classification':
                 if self.problem_type == 'binary':
@@ -78,7 +102,7 @@ class AutoGluonWrapper(AutoMLLibrary):
                 elif self.problem_type == 'multiclass':
                     self.autogluon_problem_type = 'multiclass'
                 elif self.problem_type == 'few-shot':
-                    self.autogluon_problem_type = 'few_shot_text_classification'
+                    self.autogluon_problem_type = 'few_shot_classification'
                 else:
                     raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
             
