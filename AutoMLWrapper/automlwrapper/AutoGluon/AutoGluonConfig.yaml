@@ -23,6 +23,11 @@ MultiModalPredictor:
                 __has_values: false
                 __dtype: int
                 __user_mapping: num_trials
+    predict:
+      candidate_data:
+        __has_values: false
+        __dtype: list
+        __user_mapping: zero_shot_targets
 
 TabularPredictor:
   __mlflow:

@@ -8,7 +8,6 @@ AutoGluon:
               __problem_types:
                 - binary
                 - multiclass
-                - zero-shot
             few-shot-classification:
               __problem_types:
                 - binary

@@ -7,7 +7,7 @@ from typing import Tuple, List, Dict, Any, Union
 
 class AutoMLLibrary:
     __slots__ = ['model', 'config', 'task_type', 'data_type', 'problem_type', 'is_initialized', 'output_path',
-                  'custom_data_preprocessing_func', 'fit_output', 'log_model_type']
+                  'custom_data_preprocessing_func', 'fit_output', 'eval_output', 'log_model_type']
     #---------------------------------------------------------------------------------------------#
     def __init__(self, **kwargs: str) -> None:
         self.model =            None
@@ -18,6 +18,7 @@ class AutoMLLibrary:
         self.is_initialized =   False
         self.output_path =      None
         self.fit_output =       None
+        self.eval_output =      None
         self.log_model_type =   None
         self.custom_data_preprocessing_func = None
         
@@ -167,4 +168,8 @@ class AutoMLLibrary:
 
     #---------------------------------------------------------------------------------------------# 
     def _create_model_info(self, n: int = 1) -> List[Dict[str, Any]]:
+        raise NotImplementedError
+
+    #---------------------------------------------------------------------------------------------#
+    def _evaluate_model(self, test_data: Union[pd.DataFrame, np.ndarray]) -> float:
         raise NotImplementedError

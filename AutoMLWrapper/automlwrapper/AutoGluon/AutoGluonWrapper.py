@@ -137,6 +137,11 @@ class AutoGluonWrapper(AutoMLLibrary):
     #---------------------------------------------------------------------------------------------#
     def _train_model(self, data, target_column, user_hyperparameters: dict = {}):
         
+        if self.autogluon_problem_type in ['open_vocabulary_object_detection', 'zero_shot_image_classification']:
+            print('Zero-shot models will not be trained. Model will be evaluated on the provided data.')
+            self._evaluate_model(data)
+            return
+        
         self.config.map_hyperparameters(user_hyperparameters)
         self._map_problem_type()
         
@@ -166,11 +171,18 @@ class AutoGluonWrapper(AutoMLLibrary):
             )
             self.log_model_type = self.config._get_mlflow_details('TimeSeriesPredictor').get('__log_model_type', {})
         
+
         self.fit_output = self.model.fit(
             **(self.data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 
                                           else 'TabularPredictor' if self.problem_type == 'tabular' 
                                           else 'MultiModalPredictor') or {})
+        )
+
+    #---------------------------------------------------------------------------------------------#
+    def _evaluate_model(self, test_data):
+        self.eval_output = self.model.evaluate(
+            data = test_data
         )
 
     #---------------------------------------------------------------------------------------------#
@@ -191,6 +203,10 @@ class AutoGluonWrapper(AutoMLLibrary):
 
         return best_models_info
     
+    #---------------------------------------------------------------------------------------------#
+    def _get_info_from_eval(self):
+        pass
+
     #---------------------------------------------------------------------------------------------#
     def  _get_info_from_fit_summary(self, n_th_model):
 
@@ -236,18 +252,4 @@ class AutoGluonWrapper(AutoMLLibrary):
             'model_tags_dict': {'checkpoint_name': out_config['model'].get(model_name, {}).get('checkpoint_name', '')},
         }
 
-        return model_info_args
-
-    #---------------------------------------------------------------------------------------------#
-    def _define_pyfunc_model(self):
-        
-        class autogluon_model(mlflow.pyfunc.PythonModel):
-            def __init__(self, model):
-                self.model = model
-
-            def predict(self, context, model_input):
-                return self.model.predict(model_input)
-
-        return autogluon_model(self.model)        
-        
-    
+        return model_info_args 
