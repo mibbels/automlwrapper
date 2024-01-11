@@ -17,6 +17,7 @@ class AutoGluonWrapper(AutoMLLibrary):
     #---------------------------------------------------------------------------------------------#
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.autogluon_problem_type = None
         self.config = AutoGluonConfig(os.path.join(os.path.dirname(__file__), 'AutoGluonConfig.yaml'))
         self.output_path = os.path.join(os.path.dirname(__file__),
                                          f'../output/autogluon/{datetime.timestamp(datetime.now())}')
