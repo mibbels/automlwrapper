@@ -7,15 +7,18 @@ ImageClassifier:
         __has_values: false
         __dtype: int
         __user_mapping: num_trials
+        __hint: Number of different models to try
       max_model_size:
         __has_values: false
         __dtype: int
         __user_mapping: max_model_size
+        __hint: Maximum size of the model in bytes
     fit:
       epochs: 
         __has_values: false
         __dtype: int
         __user_mapping: epochs
+        __hint: Number of epochs to train each model
 
 ImageRegressor:
   __mlflow:
@@ -26,15 +29,18 @@ ImageRegressor:
         __has_values: false
         __dtype: int
         __user_mapping: num_trials
+        __hint: Number of different models to try
       max_model_size:
         __has_values: false
         __dtype: int
         __user_mapping: max_model_size
+        __hint: Maximum size of the model in bytes
     fit:
       epochs: 
         __has_values: false
         __dtype: int,
         __user_mapping: epochs
+        __hint: Number of epochs to train each model
 
 TextClassifier:
   __mlflow:
@@ -45,15 +51,18 @@ TextClassifier:
         __has_values: false
         __dtype: int
         __user_mapping: num_trials
+        __hint: Number of different models to try
       max_model_size: 
         __has_values: false
         __dtype: int
         __user_mapping: max_model_size
+        __hint: Maximum size of the model in bytes
     fit:
       epochs: 
         __has_values: false
         __dtype: int
         __user_mapping: epochs
+        __hint: Number of epochs to train each model
 
 TextRegressor:
   __mlflow:
@@ -64,15 +73,18 @@ TextRegressor:
         __has_values: false
         __dtype: int
         __user_mapping: num_trials
+        __hint: Number of different models to try
       max_model_size: 
         __has_values: false
         __dtype: int
         __user_mapping: max_model_size
+        __hint: Maximum size of the model in bytes
     fit:
       epochs: 
         __has_values: false
         __dtype: int
         __user_mapping: epochs
+        __hint: Number of epochs to train each model
 
 StructuredDataClassifier:
   __mlflow:
@@ -83,15 +95,18 @@ StructuredDataClassifier:
         __has_values: false
         __dtype: int
         __user_mapping: num_trials
+        __hint: Number of different models to try
       max_model_size: 
         __has_values: false
         __dtype: int
         __user_mapping: max_model_size
+        __hint: Maximum size of the model in bytes
     fit:
       epochs: 
         __has_values: false
         __dtype: int
         __user_mapping: epochs
+        __hint: Number of epochs to train each model
 
 StructuredDataRegressor:
   __mlflow:
@@ -102,15 +117,18 @@ StructuredDataRegressor:
         __has_values: false
         __dtype: int
         __user_mapping: num_trials
+        __hint: Number of different models to try
       max_model_size: 
         __has_values: false
         __dtype: int
         __user_mapping: max_model_size
+        __hint: Maximum size of the model in bytes
     fit:
       epochs: 
         __has_values: false
         __dtype: int
         __user_mapping: epochs
+        __hint: Number of epochs to train each model
 
 TimeseriesForecaster:
   __mlflow:
@@ -121,12 +139,15 @@ TimeseriesForecaster:
         __has_values: false
         __dtype: int
         __user_mapping: num_trials
+        __hint: Number of different models to try
       max_model_size: 
         __has_values: false
         __dtype: int
         __user_mapping: max_model_size
+        __hint: Maximum size of the model in bytes
     fit:
       epochs: 
         __has_values: false
         __dtype: int
         __user_mapping: epochs
+        __hint: Number of epochs to train each model

@@ -7,14 +7,17 @@ AutoSklearnClassifier:
         __has_values: false
         __dtype: int
         __user_mapping: time_limit
+        __hint: Time limit for the experiment in seconds
       n_jobs:
         __has_values: false
         __dtype: int
         __user_mapping: n_jobs
+        __hint: Number of parallel jobs to run
       memory_limit:
         __has_values: false
         __dtype: int
         __user_mapping: memory_limit
+        __hint: Memory limit for each model in MB
       __extra_args:
         ensemble_kwargs:
           __dtype: dict
@@ -22,6 +25,7 @@ AutoSklearnClassifier:
             __has_values: false
             __dtype: int
             __user_mapping: ensemble_size
+            __hint: Number of models to include in the ensemble
      
 
 AutoSklearnRegressor:
@@ -33,14 +37,17 @@ AutoSklearnRegressor:
         __has_values: false
         __dtype: int
         __user_mapping: time_limit
+        __hint: Time limit for the experiment in seconds
       n_jobs:
         __has_values: false
         __dtype: int
         __user_mapping: n_jobs
+        __hint: Number of parallel jobs to run
       memory_limit:
         __has_values: false
         __dtype: int
         __user_mapping: memory_limit
+        __hint: Memory limit for each model in MB
       __extra_args:
         ensemble_kwargs:
           __dtype: dict
@@ -48,3 +55,4 @@ AutoSklearnRegressor:
             __has_values: false
             __dtype: int
             __user_mapping: ensemble_size    
+            __hint: Number of models to include in the ensemble

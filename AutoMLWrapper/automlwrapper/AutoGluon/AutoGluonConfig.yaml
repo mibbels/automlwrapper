@@ -11,11 +11,13 @@ MultiModalPredictor:
           - high_quality
           - medium_quality
         __user_mapping: preset
+        __hint: Preset for the quality of the model. Higher quality models take longer to train.
     fit:
       time_limit:
         __has_values: false
         __dtype: int
         __user_mapping: time_limit
+        __hint: Time limit for the experiment in seconds
       __extra_args:
         hyperparameter_tune_kwargs:
             __dtype: dict
@@ -23,11 +25,14 @@ MultiModalPredictor:
                 __has_values: false
                 __dtype: int
                 __user_mapping: num_trials
+                __hint: Number of different models to try
+
     predict:
       candidate_data:
         __has_values: false
         __dtype: list
         __user_mapping: zero_shot_targets
+        __hint: List of candidates for the model to predict on
 
 TabularPredictor:
   __mlflow:
@@ -38,11 +43,13 @@ TabularPredictor:
         __has_values: false
         __dtype: str
         __user_mapping: eval_metric
+        __hint: Metric to use for evaluation
     fit:
       time_limit:
         __has_values: false
         __dtype: int
         __user_mapping: time_limit
+        __hint: Time limit for the experiment in seconds
       presets:
         __has_values: true
         __dtype: str
@@ -55,6 +62,7 @@ TabularPredictor:
           - interpretable
           - ignore_text
         __user_mapping: preset
+        __hint: Preset for the quality of the model. Higher quality models take longer to train.
       __extra_args:
         hyperparameter_tune_kwargs:
             __dtype: dict
@@ -62,6 +70,7 @@ TabularPredictor:
                 __has_values: false
                 __dtype: int
                 __user_mapping: num_trials
+                __hint: Number of different models to try
 
 TimeSeriesPredictor:
   __mlflow:
@@ -72,6 +81,7 @@ TimeSeriesPredictor:
         __has_values: false
         __dtype: int
         __user_mapping: prediction_length
+        __hint: Number of time steps to predict into the future
       eval_metric:
         __has_values: true
         __dtype: str
@@ -83,11 +93,13 @@ TimeSeriesPredictor:
           - MSE
           - RMSE
         __user_mapping: eval_metric
+        __hint: Metric to use for evaluation
     fit:
       time_limit:
         __has_values: false
         __dtype: int
         __user_mapping: time_limit
+        __hint: Time limit for the experiment in seconds
       presets:
         __has_values: true
         __dtype: str
@@ -97,6 +109,7 @@ TimeSeriesPredictor:
           - medium_quality
           - fast training
         __user_mapping: preset
+        __hint: Preset for the quality of the model. Higher quality models take longer to train.
       __extra_args:
         hyperparameter_tune_kwargs:
             __dtype: dict
@@ -104,4 +117,5 @@ TimeSeriesPredictor:
                 __has_values: false
                 __dtype: int
                 __user_mapping: num_trials
+                __hint: Number of different models to try
 
