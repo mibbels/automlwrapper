@@ -11,6 +11,8 @@ from pyspark.sql.session import SparkSession
 from pywebhdfs.webhdfs import PyWebHdfsClient
 from PIL import Image
 from sedarapi import SedarAPI
+from sklearn.model_selection import train_test_split
+
 
 
 class SedarDataLoader:
@@ -330,10 +332,9 @@ class SedarDataLoader:
                                 problem_type, target=None, dataset_description="", model="gpt-3.5-turbo",
                                 iterations = 3):
         
-        from CAAFE.caafe import CAAFEImageClassifier, CAAFEClassifier, CAAFEImageSegmentor
+        from caafe import CAAFEImageClassifier, CAAFEClassifier, CAAFEImageSegmentor
         from sklearn.metrics import accuracy_score, jaccard_score
         from sklearn.ensemble import RandomForestClassifier
-        from sklearn.model_selection import train_test_split
         from tabpfn.scripts import tabular_metrics
         import openai
 
