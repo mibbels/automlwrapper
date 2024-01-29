@@ -85,10 +85,10 @@ class CAAFEImageSegmentor(BaseEstimator, ClassifierMixin):
         )
 
         # Store the classes seen during fit
-        self.classes_ = unique_labels(y)
+        self.classes_ = np.unique(y)
 
         self.base_classifier = self.simple_unet_model(X.shape[1:], len(self.classes_), 'iou')
-        self.base_classifier.fit(X, to_categorical(y, len(self.classes_)), epochs=2, verbose=1)
+        self.base_classifier.fit(X, y, epochs=5, verbose=1)
 
         return self
     
@@ -131,8 +131,7 @@ class CAAFEImageSegmentor(BaseEstimator, ClassifierMixin):
         train_indices, valid_indices = train_test_split(indices, test_size=0.2, random_state=None)
         
         X_train, X_valid = X[train_indices], X[valid_indices]
-        y_train = [y[idx] for idx in train_indices]
-        y_valid = [y[idx] for idx in valid_indices]
+        y_train, y_valid = y[train_indices], y[valid_indices]
                     
         X_train_extended = copy.deepcopy(X_train)
         X_valid_extended = copy.deepcopy(X_valid)
@@ -163,7 +162,7 @@ class CAAFEImageSegmentor(BaseEstimator, ClassifierMixin):
         except Exception as e:
             display_method(f"Error in code execution. {type(e)} {e}")
             display_method(f"```python\n{self.format_for_display(code_new)}\n```\n")
-            return e, None, None, None, None
+            return e, None, None
         from contextlib import contextmanager
         import sys, os
         with open(os.devnull, "w") as devnull:
@@ -418,11 +417,15 @@ class CAAFEImageSegmentor(BaseEstimator, ClassifierMixin):
 
 
     def simple_unet_model(self, input_shape, num_classes, metric = "accuracy"):
+
         inputs = tf.keras.Input(input_shape)
         if metric == "accuracy":
             pass
         elif metric == "iou":
-            metric = tf.keras.metrics.MeanIoU(num_classes=num_classes)
+            if num_classes == 2:
+                metric = tf.keras.metrics.BinaryIoU()
+            else:
+                metric = tf.keras.metrics.MeanIoU(num_classes=num_classes)
 
         c1 = Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(inputs)
         p1 = MaxPooling2D((2, 2))(c1)
@@ -440,10 +443,18 @@ class CAAFEImageSegmentor(BaseEstimator, ClassifierMixin):
         merge5 = concatenate([u5, c1])
         c5 = Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(merge5)
 
-        outputs = Conv2D(num_classes, (1, 1), activation='softmax')(c5)
+        if num_classes == 2:
+            outputs = Conv2D(1, (1, 1), activation='sigmoid')(c5)
+        else:
+            outputs = Conv2D(num_classes, (1, 1), activation='softmax')(c5)
 
         model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
-        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=[metric])
+        
+        if num_classes == 2:
+            model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[metric])
+        else:
+            model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=[metric])
+        
 
         return model
     
@@ -464,16 +475,17 @@ class CAAFEImageSegmentor(BaseEstimator, ClassifierMixin):
         tf.random.set_seed(seed)
 
         num_classes = len(np.unique(y_train))
-
         model = self.simple_unet_model(X_train.shape[1:], num_classes, metric = "iou")
 
-        model.fit(X_train, y_train, epochs=2, verbose=1, validation_data=(X_valid, y_valid))
+        model.fit(X_train, y_train, epochs=5, verbose=1, validation_data=(X_valid, y_valid))
 
         y_pred = model.predict(X_valid)
-        y_pred_label = np.argmax(y_pred, axis=1)
+        if num_classes == 2:
+            y_pred = y_pred > 0.5
+            iou = jaccard_score(y_valid.flatten(), y_pred.flatten(), average='binary')
+        else:
+            iou = jaccard_score(y_valid.flatten(), y_pred.flatten(), average='macro')
 
-        iou = jaccard_score(y_valid.flatten(), y_pred_label.flatten(), average='macro')
-        
         method_str = method if type(method) == str else "small unet"
         return {
             "iou": float(iou),
@@ -510,18 +522,19 @@ class CAAFEImageSegmentor(BaseEstimator, ClassifierMixin):
         proba = self.base_classifier.predict(X_preprocessed)
         return proba
 
-    def predict(self, X):       
+    def predict(self, X, num_classes = None):       
         proba = self.predict_proba(X)
-        predictions = np.argmax(proba, axis=1)
-        return predictions
+        if num_classes == 2 or len(self.classes_) == 2:
+            proba = proba > 0.5
+        return proba
 
 
     def performance_before_run(self, X, y):
         num_classes = len(np.unique(y))
         self.base_classifier = self.simple_unet_model(X.shape[1:], num_classes, 'iou')
-        self.base_classifier.fit(X, to_categorical(y, num_classes), epochs=2, verbose=1)
+        self.base_classifier.fit(X, y, epochs=5, verbose=1)
         
-        predictions = self.predict(X)
+        predictions = self.predict(X, num_classes)
         self.base_classifier = None
         return predictions
 

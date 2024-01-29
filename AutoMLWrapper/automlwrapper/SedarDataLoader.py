@@ -286,7 +286,7 @@ class SedarDataLoader:
                     X.append(img_arr)
 
                 with Image.open(mask_path) as mask:
-                    mask_arr = np.array(mask)
+                    mask_arr = np.array(mask.convert('1'))
                     if mask.mode != 'RGB':
                         mask_arr = mask_arr.reshape(mask_arr.shape[0], mask_arr.shape[1], 1)
                     Y.append(mask_arr)
@@ -297,7 +297,8 @@ class SedarDataLoader:
 
 
     # --------------------------------------------------------------------------------------------#
-    def split_train_test(self, data, label=None, train_size=0.8):
+    @staticmethod
+    def split_train_test(data, label=None, train_size=0.8):
         if data is None:
             return None, None
         
@@ -329,7 +330,7 @@ class SedarDataLoader:
 
     # --------------------------------------------------------------------------------------------#
     def CAAFEFeatureEngineering(self, workspace_id, dataset_id, file_save_location, data_type, 
-                                problem_type, target=None, dataset_description="", model="gpt-3.5-turbo",
+                                task_type, target=None, dataset_description="", model="gpt-3.5-turbo",
                                 iterations = 3):
         
         from caafe import CAAFEImageClassifier, CAAFEClassifier, CAAFEImageSegmentor
@@ -338,7 +339,7 @@ class SedarDataLoader:
         from tabpfn.scripts import tabular_metrics
         import openai
 
-        if data_type == 'tabular' and problem_type == 'classification':
+        if data_type == 'tabular' and task_type == 'classification':
             df = self.query_data(workspace_id, dataset_id)
             df_train, df_test = self.split_train_test(df)
 
@@ -370,7 +371,7 @@ class SedarDataLoader:
 
             return caafe_clf.apply_code(df)
 
-        elif data_type == 'image' and problem_type == 'classification':
+        elif data_type == 'image' and task_type == 'classification':
             loc = self.query_data(workspace_id, dataset_id, file_save_location=file_save_location)
             X, y, map = self.zip_to_class_np(loc[0], file_save_location+'_unzipped')
 
@@ -395,7 +396,7 @@ class SedarDataLoader:
 
             return X_, y_, map
         
-        elif data_type == 'image' and problem_type == 'segmentation':
+        elif data_type == 'image' and task_type == 'segmentation':
             loc = self.query_data(workspace_id, dataset_id, file_save_location=file_save_location)
             X, y = self.zip_to_segmentation_np(loc[0], file_save_location+'_unzipped')
 
@@ -405,7 +406,11 @@ class SedarDataLoader:
                 )
 
             pred = caafe_clf.performance_before_run(X, y)
-            iou = iou = jaccard_score(y.flatten(), pred.flatten(), average='macro')
+            if len(np.unique(y)) == 2:
+                iou = iou = jaccard_score(y.flatten(), pred.flatten(), average='binary')
+            else:
+                iou = iou = jaccard_score(y.flatten(), pred.flatten(), average='macro')
+
             print(f'IoU before CAAFE {iou}') 
 
 
@@ -416,7 +421,11 @@ class SedarDataLoader:
                 )
 
             pred = caafe_clf.predict(X)
-            iou = iou = jaccard_score(y.flatten(), pred.flatten(), average='macro')
+            if len(np.unique(y)) == 2:
+                iou = iou = jaccard_score(y.flatten(), pred.flatten(), average='binary')
+            else:
+                iou = iou = jaccard_score(y.flatten(), pred.flatten(), average='macro')
+
             print(f'IoU after CAAFE {iou}') 
             X_, y_ = caafe_clf.apply_code(X, y)
             return X_, y_,

@@ -1,5 +1,8 @@
-from autosklearn.classification import AutoSklearnClassifier
-from autosklearn.regression import AutoSklearnRegressor
+try:
+    from autosklearn.classification import AutoSklearnClassifier
+    from autosklearn.regression import AutoSklearnRegressor
+except ImportError:
+    print("WARNING AutoSklearn is not installed.")
 
 import os
 from datetime import datetime
@@ -15,8 +18,13 @@ class AutoSklearnWrapper(AutoMLLibrary):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config = AutoSklearnConfig(os.path.join(os.path.dirname(__file__), 'AutoSklearnConfig.yaml'))
-        self.output_path = os.path.join(os.path.dirname(__file__),
-                                         f'../output/autosklearn/{datetime.timestamp(datetime.now())}')
+        
+        
+        if not os.path.exists(os.path.join(os.getcwd(), 'AutoMLOutput')):
+            os.makedirs(os.path.join(os.getcwd(), 'AutoMLOutput'))
+
+        self.output_path = os.path.join(os.getcwd(),
+                                         f'AutoMLOutput/autosklearn{datetime.timestamp(datetime.now())}')
 
     #---------------------------------------------------------------------------------------------#
     def _data_preprocessing(self, data, target_column):

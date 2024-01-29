@@ -46,16 +46,16 @@ class TestAutoMLWrapper(unittest.TestCase):
     @parameterized.expand([
         #("workspace", "dataset", "file_save_location", "unzip_location", TYPE),
         ("13b4787c3e454649aa05a4cd680edc37", "986f2e837ca44f3e8c0ee7d2dc0c4287",
-          "./data/sedar_raw/zip", "./data/sedar_raw/unzip", "STRUCTURED")
+          "./data/sedar_raw/zip", "./data/sedar_raw/unzip", "STRUCTURED"),
 
         ("13b4787c3e454649aa05a4cd680edc37", "b5b74391e41e4634a54d5cffa059663b",
-          "./data/sedar_raw/zip", "./data/sedar_raw/unzip", "IM_OBJECT")
+          "./data/sedar_raw/zip", "./data/sedar_raw/unzip", "IM_OBJECT"),
 
         ("13b4787c3e454649aa05a4cd680edc37", "324ea420125d4167a76151b62368c4ad",
-          "./data/sedar_raw/zip", "./data/sedar_raw/unzip", "IM_SEGMENT")
+          "./data/sedar_raw/zip", "./data/sedar_raw/unzip", "IM_SEGMENT"),
 
         ("13b4787c3e454649aa05a4cd680edc37", "513c6b1ee46b478c8e0925a098d2f387",
-          "./data/sedar_raw/zip", "./data/sedar_raw/unzip", "IM_CLASS")
+          "./data/sedar_raw/zip", "./data/sedar_raw/unzip", "IM_CLASS"),
     ])
     def test_sedar_data_loader(self, workspace, dataset, file_save_location, unzip_location, type):
         base_url = "http://192.168.220.107:5000"
@@ -112,11 +112,11 @@ class TestAutoMLWrapper(unittest.TestCase):
     @parameterized.expand([
         #("workspace", "dataset", "file_save_location", data_type, problem_type, target),
         ("13b4787c3e454649aa05a4cd680edc37", "986f2e837ca44f3e8c0ee7d2dc0c4287",
-          "./data/sedar_raw/zip", "tabular", "classification", "Type")
+          "./data/sedar_raw/zip", "tabular", "classification", "Type"),
         ("13b4787c3e454649aa05a4cd680edc37", "324ea420125d4167a76151b62368c4ad",
-          "./data/sedar_raw/zip", "image", "segmentation", None)
+          "./data/sedar_raw/zip", "image", "segmentation", None),
         ("13b4787c3e454649aa05a4cd680edc37", "513c6b1ee46b478c8e0925a098d2f387",
-          "./data/sedar_raw/zip", "image", "classification", None)
+          "./data/sedar_raw/zip", "image", "classification", None),
     ])
     def test_sedar_caafe(self, workspace_id, dataset_id, file_save_location, data_type, problem_type, target):
         base_url = "http://192.168.220.107:5000"

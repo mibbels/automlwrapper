@@ -17,8 +17,10 @@ class AutoKerasWrapper(AutoMLLibrary):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config = AutoKerasConfig(os.path.join(os.path.dirname(__file__), 'AutoKerasConfig.yaml'))
-        self.output_path = os.path.join(os.path.dirname(__file__),
-                                         f'../output/autokeras/{datetime.timestamp(datetime.now())}')
+        if not os.path.exists(os.path.join(os.getcwd(), 'AutoMLOutput')):
+            os.makedirs(os.path.join(os.getcwd(), 'AutoMLOutput'))
+        self.output_path = os.path.join(os.getcwd(),
+                                         f'AutoMLOutput/autokeras{datetime.timestamp(datetime.now())}')
         
     #---------------------------------------------------------------------------------------------#
     def data_preprocessing(self, data, target):

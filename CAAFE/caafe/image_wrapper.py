@@ -182,8 +182,7 @@ class CAAFEImageClassifier(BaseEstimator, ClassifierMixin):
         train_indices, valid_indices = train_test_split(indices, test_size=0.2, random_state=None)
         
         X_train, X_valid = X[train_indices], X[valid_indices]
-        y_train = [y[idx] for idx in train_indices]
-        y_valid = [y[idx] for idx in valid_indices]
+        y_train, y_valid = y[train_indices], y[valid_indices]
                     
         X_train_extended = copy.deepcopy(X_train)
         X_valid_extended = copy.deepcopy(X_valid)

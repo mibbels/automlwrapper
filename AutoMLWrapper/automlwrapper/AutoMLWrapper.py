@@ -130,11 +130,11 @@ class AutoMLWrapper:
         self.__library._train_model(data, target_column, hyperparameters)
 
     #---------------------------------------------------------------------------------------------#
-    def Evaluate(self, test_data: Any) -> float:
+    def Evaluate(self, test_data: Any, **kwargs) -> float:
         if self.__library is None:
             raise ValueError("You must call 'train' before 'evaluate'")
         
-        self.__library._evaluate_model(test_data)
+        self.__library._evaluate_model(test_data, **kwargs)
 
     #---------------------------------------------------------------------------------------------#
     def Output(self, nBestModels: int = 1, outputForMLFlow : bool = True):
@@ -153,7 +153,7 @@ class AutoMLWrapper:
         if not best_model_info:
             return
 
-        mlflow_handler = MLflowHandler(best_model_info, user_tags, self.__out_path)
+        mlflow_handler = MLflowHandler(best_model_info, user_tags)
         return mlflow_handler.log_to_mlflow()    
 
     #---------------------------------------------------------------------------------------------#
@@ -163,7 +163,7 @@ class AutoMLWrapper:
         run_ids = []
         for i, model_info in enumerate(top_n_models_info):
    
-            mlflow_handler = MLflowHandler(model_info, user_tags, self.__out_path)
+            mlflow_handler = MLflowHandler(model_info, user_tags)
             run_ids.append(mlflow_handler.log_to_mlflow())
 
         return run_ids 

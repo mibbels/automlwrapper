@@ -19,8 +19,10 @@ class AutoGluonWrapper(AutoMLLibrary):
         super().__init__(**kwargs)
         self.autogluon_problem_type = None
         self.config = AutoGluonConfig(os.path.join(os.path.dirname(__file__), 'AutoGluonConfig.yaml'))
-        self.output_path = os.path.join(os.path.dirname(__file__),
-                                         f'../output/autogluon/{datetime.timestamp(datetime.now())}')
+        if not os.path.exists(os.path.join(os.getcwd(), 'AutoMLOutput')):
+            os.makedirs(os.path.join(os.getcwd(), 'AutoMLOutput'))
+        self.output_path = os.path.join(os.getcwd(),
+                                         f'AutoMLOutput/autogluon{datetime.timestamp(datetime.now())}')
     #---------------------------------------------------------------------------------------------#
     def _map_problem_type(self):
 
@@ -181,10 +183,14 @@ class AutoGluonWrapper(AutoMLLibrary):
         )
 
     #---------------------------------------------------------------------------------------------#
-    def _evaluate_model(self, test_data):
-        self.eval_output = self.model.evaluate(
-            data = test_data
-        )
+    def _evaluate_model(self, test_data, **kwargs):
+        # self.eval_output = self.model.evaluate(
+        #     data = test_data,
+        #     **kwargs
+        # )
+        # return self.eval_output
+        pred_proba = self.model.predict_proba(test_data)
+        return self.model.evaluate_predictions(test_data['Type'], pred_proba)
 
     #---------------------------------------------------------------------------------------------#
     def _create_model_info(self, n_models: int = 1):
