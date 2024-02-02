@@ -1,6 +1,6 @@
 import autokeras as ak
 import keras
-
+import pandas as pd
 from datetime import datetime
 import os
 from PIL import Image
@@ -33,12 +33,15 @@ class AutoKerasWrapper(AutoMLLibrary):
             x, y = self.separate(data, target, type='pandas')
 
         elif self.data_type == 'image' or self.data_type == 'text':
-            x,y = self.separate(data, target, type='tuple')
+            x, y = self.separate(data, target, type='tuple')
         
         return {'x': x, 'y': y}
     
     #---------------------------------------------------------------------------------------------#
     def _train_model(self, data, target_column, user_hyperparameters: dict = {}):
+
+        if type(data) not in [pd.DataFrame, tuple]:
+            raise ValueError(f'data must be of type pandas DataFrame or 2-tuple of numpy arrays, but got {type(data)}')
         
         self.config.map_hyperparameters(user_hyperparameters)
 
@@ -134,6 +137,19 @@ class AutoKerasWrapper(AutoMLLibrary):
             **(self.data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('TimeseriesForecaster') or {})
             )
+
+    #---------------------------------------------------------------------------------------------#
+    def _evaluate_model(self, test_data, **kwargs):
+        if type(test_data) not in [pd.DataFrame, tuple]:
+            raise ValueError(f'data must be of type pandas DataFrame or 2-tuple of numpy arrays, but got {type(data)}')
+      
+
+        self.eval_output = self.model.evaluate(
+            **(self.data_preprocessing(test_data, None)),
+            **kwargs
+        )
+        return self.eval_output
+
 
     #---------------------------------------------------------------------------------------------#
     def _create_model_info(self, n: int = 1):

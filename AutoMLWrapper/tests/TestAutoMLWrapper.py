@@ -14,15 +14,15 @@ class TestAutoMLWrapper(unittest.TestCase):
     # ---------------------------------------------------------------------------------------------------------------------------------#
     # =================================================================================================================================#
     @parameterized.expand([
-        #("autosklearn", "tabular", "classification", "multiclass", glass_df, 'Type'),
+        ("autosklearn", "tabular", "classification", "multiclass", glass_df, 'Type'),
 
-        #("autokeras", "tabular", "classification", "multiclass", glass_df, 'Type'),
+        ("autokeras", "tabular", "classification", "multiclass", glass_df, 'Type'),
         ("autokeras", "image", "classification", "multiclass", mnist_tp, 'label'),
-        #("autokeras", "timeseries", "forecast", "forecast", m4_df, 'target'),
+        ("autokeras", "timeseries", "forecast", "forecast", m4_df, 'target'),
         
-        #("autogluon", "tabular", "classification", "multiclass", glass_df, 'Type'),
-        #("autogluon", "image", "classification", "multiclass", mnist_byte_df, 'label'),
-        #("autogluon", "timeseries", "forecast", "forecast", m4_df, 'target'),
+        ("autogluon", "tabular", "classification", "multiclass", glass_df, 'Type'),
+        ("autogluon", "image", "classification", "multiclass", mnist_byte_df, 'label'),
+        ("autogluon", "timeseries", "forecast", "forecast", m4_df, 'target'),
 
     ])
     def test_auto_ml_wrapper(self, library, data_type, task_type, problem_type, data_sample, target_column):
@@ -39,6 +39,8 @@ class TestAutoMLWrapper(unittest.TestCase):
 
             wrapper.Initialize(data_sample, target_column, task_type, data_type, problem_type)
             wrapper.Train(data_sample, target_column, task_type, data_type, problem_type, hp)
+
+            wrapper.Evaluate(data_sample, target_column)
     
     # =================================================================================================================================#
     # ---------------------------------------------------------------------------------------------------------------------------------#

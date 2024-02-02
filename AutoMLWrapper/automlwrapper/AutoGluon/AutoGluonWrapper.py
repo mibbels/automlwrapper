@@ -140,10 +140,13 @@ class AutoGluonWrapper(AutoMLLibrary):
     #---------------------------------------------------------------------------------------------#
     def _train_model(self, data, target_column, user_hyperparameters: dict = {}):
         
+        if type(data) not in [pd.DataFrame]:
+            raise ValueError(f'data must be of type pandas DataFrame, but got {type(data)}')
+        
         if self.autogluon_problem_type in ['open_vocabulary_object_detection', 'zero_shot_image_classification']:
             print('Zero-shot models will not be trained. Model will be evaluated on the provided data.')
-            self._evaluate_model(data)
-            return
+            ev = self._evaluate_model(data)
+            return ev
         
         self.config.map_hyperparameters(user_hyperparameters)
         self._map_problem_type()

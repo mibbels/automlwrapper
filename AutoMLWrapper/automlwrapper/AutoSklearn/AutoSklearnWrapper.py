@@ -1,11 +1,12 @@
 try:
     from autosklearn.classification import AutoSklearnClassifier
     from autosklearn.regression import AutoSklearnRegressor
-except ImportError:
-    print("WARNING AutoSklearn is not installed.")
+except ImportError as e:
+    print(f"WARNING AutoSklearn could not be mported: \n {e}.")
 
 import os
 from datetime import datetime
+import pandas as pd
 
 from ..AutoMLLibrary import AutoMLLibrary
 from ..ModelInfo import ModelInfo
@@ -38,7 +39,10 @@ class AutoSklearnWrapper(AutoMLLibrary):
     
     #---------------------------------------------------------------------------------------------#
     def _train_model(self, data, target_column : str, user_hyperparameters : dict = {}):
-    
+        
+        if type(data) not in [pd.DataFrame]:
+            raise ValueError(f'data must be of type pandas DataFrame, but got {type(data)}')
+        
         self.config.map_hyperparameters(user_hyperparameters)
 
         if self.task_type == 'classification':
@@ -64,7 +68,23 @@ class AutoSklearnWrapper(AutoMLLibrary):
                                           else None) or {})
             )
     
+    #---------------------------------------------------------------------------------------------#
+    def _evaluate_model(self, test_data, **kwargs):
+        if type(test_data) not in [pd.DataFrame]:
+            raise ValueError(f'data must be of type pandas DataFrame, but got {type(test_data)}')
+
+        if 'target' not in kwargs:
+            raise ValueError('target column must be specified.')
+
+        X_test, y_test = self._separate_x_y_df(test_data, target_column=kwargs['target'])
+
+        self.score = self.model.evaluate(
+            X_test, y_test,
+            **kwargs
+        )
+        return self.eval_output
     
+
     #---------------------------------------------------------------------------------------------#
     def _create_model_info(self, n: int = 1):
 
