@@ -6,6 +6,7 @@ import os
 import yaml
 import mlflow.pyfunc
 from datetime import datetime
+import pandas as pd
 
 from ..AutoMLLibrary import AutoMLLibrary
 from ..ModelInfo import ModelInfo
@@ -143,10 +144,7 @@ class AutoGluonWrapper(AutoMLLibrary):
         if type(data) not in [pd.DataFrame]:
             raise ValueError(f'data must be of type pandas DataFrame, but got {type(data)}')
         
-        if self.autogluon_problem_type in ['open_vocabulary_object_detection', 'zero_shot_image_classification']:
-            print('Zero-shot models will not be trained. Model will be evaluated on the provided data.')
-            ev = self._evaluate_model(data)
-            return ev
+        
         
         self.config.map_hyperparameters(user_hyperparameters)
         self._map_problem_type()
@@ -178,6 +176,33 @@ class AutoGluonWrapper(AutoMLLibrary):
             self.log_model_type = self.config._get_mlflow_details('TimeSeriesPredictor').get('__log_model_type', {})
         
 
+        if self.autogluon_problem_type in ['open_vocabulary_object_detection',]:
+            print('Zero-shot models will not be trained. The Model will now make predictions on the data and return the results as a dataframe.')
+            list_targets = self.config.get_params_predict_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 
+                                          else 'TabularPredictor' if self.problem_type == 'tabular' 
+                                          else 'MultiModalPredictor')['candidate_data']            
+            if target_column in data.columns:
+                data = data.drop(columns=[target_column])
+            else:
+                pass            
+            data['prompt'] = list_targets * len(data)
+            ev = self.model.predict(data, as_pandas=True)
+            return ev
+
+        if self.autogluon_problem_type in ['zero_shot_image_classification']:
+            print('Zero-shot models will not be trained. The Model will now make predictions on the data and return the results.')
+            list_targets = self.config.get_params_predict_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 
+                                          else 'TabularPredictor' if self.problem_type == 'tabular' 
+                                          else 'MultiModalPredictor')['candidate_data']            
+            if target_column in data.columns:
+                data = data.drop(columns=[target_column])
+            else:
+                pass            
+            data['text'] = list_targets * len(data)
+            ev = self.model.predict_proba(data, as_pandas=True)
+            return ev
+        
+        
         self.fit_output = self.model.fit(
             **(self.data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 

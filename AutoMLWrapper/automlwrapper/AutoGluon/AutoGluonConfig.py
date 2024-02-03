@@ -7,6 +7,11 @@ class AutoGluonConfig(Configuration):
         super().__init__(config_path)
 
     #---------------------------------------------------------------------------------------------#
+    def get_params_predict_by_key(self, key):
+        return self.map_user_params('predict', model_type=key, user_hyperparameters=self.user_hyperparameters)
+    
+
+    #---------------------------------------------------------------------------------------------#
     def get_params_constructor_by_key(self, key):
         return self.map_user_params('constructor', model_type=key, user_hyperparameters=self.user_hyperparameters)
 
