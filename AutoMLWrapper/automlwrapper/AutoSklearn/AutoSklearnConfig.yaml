@@ -18,6 +18,21 @@ AutoSklearnClassifier:
         __dtype: int
         __user_mapping: memory_limit
         __hint: Memory limit for each model in MB
+      metric:
+        __has_values: true
+        __values:
+          - accuracy
+          - balanced_accuracy
+          - f1
+          - f1_weighted
+          - roc_auc
+          - precision
+          - average_precision
+          - recall
+          - log_loss
+        __dtype: str
+        __user_mapping: evaluation_metric
+        __hint: Metric to use for training and validation
       __extra_args:
         ensemble_kwargs:
           __dtype: dict
@@ -48,6 +63,16 @@ AutoSklearnRegressor:
         __dtype: int
         __user_mapping: memory_limit
         __hint: Memory limit for each model in MB
+      metric:
+        __has_values: true
+        __values:
+          - r2
+          - mean_squared_error
+          - mean_absolute_error
+          - median_absolute_error
+        __dtype: str
+        __user_mapping: evaluation_metric
+        __hint: Metric to use for training and validation
       __extra_args:
         ensemble_kwargs:
           __dtype: dict

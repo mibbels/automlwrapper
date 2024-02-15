@@ -159,40 +159,45 @@ class SedarDataLoader:
     def zip_to_coco_df_gluon(self, zip_path, unzip_path):
         file_paths = self.extract_zip(zip_path, unzip_path)
 
-        label_file = [path for path in file_paths if path.endswith('.json')][0]
-        image_location = [path.split('/')[:-1] for path in file_paths if path.endswith('.jpg') or path.endswith('.png')][0]
-        image_location = '/'.join(image_location)
+        label_file = [path for path in file_paths if path.endswith('.json')][0]        
 
-        annotation_json = None
-        with open(os.path.join(unzip_path, label_file)) as f:
-            annotation_json = json.load(f)
+        # image_location = [path.split('/')[:-1] for path in file_paths if path.endswith('.jpg') or path.endswith('.png')][0]
+        # image_location = '/'.join(image_location)
+
+        # annotation_json = None
+        # with open(os.path.join(unzip_path, label_file)) as f:
+        #     annotation_json = json.load(f)
          
-        image_list = []
-        image_id_list = []
-        for image_info in annotation_json['images']:
-            image_id = image_info['id']
-            file_name = image_info['file_name']
+        # image_list = []
+        # image_id_list = []
+        # for image_info in annotation_json['images']:
+        #     image_id = image_info['id']
+        #     file_name = image_info['file_name']
 
-            image_full_path = os.path.join(unzip_path, file_name)
-            if not os.path.exists(image_full_path):
-                image_full_path = os.path.join(unzip_path, image_location, file_name.split('/')[-1])
+        #     image_full_path = os.path.join(unzip_path, file_name)
+        #     if not os.path.exists(image_full_path):
+        #         image_full_path = os.path.join(unzip_path, image_location, file_name.split('/')[-1])
 
-            image_list.append(image_full_path)
-            image_id_list.append(image_id)
+        #     image_list.append(image_full_path)
+        #     image_id_list.append(image_id)
 
-        df = pd.DataFrame(data={'tmp_id': image_id_list, 'image': image_list})
+        # df = pd.DataFrame(data={'tmp_id': image_id_list, 'image': image_list})
 
-        bbox_mapping = {}
-        for annotation in annotation_json["annotations"]:
-            image_id = annotation["image_id"]
-            bbox = annotation["bbox"]
-            if image_id not in bbox_mapping:
-                bbox_mapping[image_id] = []
-            bbox_mapping[image_id].append(bbox)
+        # bbox_mapping = {}
+        # for annotation in annotation_json["annotations"]:
+        #     image_id = annotation["image_id"]
+        #     bbox = annotation["bbox"]
+        #     if image_id not in bbox_mapping:
+        #         bbox_mapping[image_id] = []
+        #     bbox_mapping[image_id].append(bbox)
 
-        df['label'] = df['tmp_id'].apply(lambda x: bbox_mapping.get(x, []))
-        df = df.drop(columns=['tmp_id'])
-
+        # df['label'] = df['tmp_id'].apply(lambda x: bbox_mapping.get(x, []))
+        # df = df.drop(columns=['tmp_id'])
+        #------------------------------------------------
+        # AutoGluon will: convert from (x, y, w, h) to (xmin, ymin, xmax, ymax) and clip bound
+        # einfacher mir AutoGluon Funktion
+        from autogluon.multimodal.utils.object_detection import from_coco
+        df = from_coco(label_file)
         return df
 
     # --------------------------------------------------------------------------------------------#
@@ -248,7 +253,7 @@ class SedarDataLoader:
                     images.append(img_arr)
                     labels.append(label)
             except IOError:
-                print(f"Could nwe design th eot read image: {image_path}")
+                print(f"Could not read image: {image_path}")
 
         x = np.array(images)
         y = np.array(labels)
@@ -318,6 +323,13 @@ class SedarDataLoader:
 
     # --------------------------------------------------------------------------------------------#
     def extract_zip(self, zip_path, unzip_path):
+
+        if not zip_path.endswith('.zip'):
+            zip_files = [f for f in os.listdir(zip_path) if f.endswith('.zip')]
+            if not zip_files:
+                raise Exception(f'No zip files found in {zip_path}')
+            zip_path = os.path.join(zip_path, zip_files[0])
+
         if not os.path.exists(unzip_path):
             os.makedirs(unzip_path)
 

@@ -125,9 +125,11 @@ def create_mnist_tuple(n_samples: int = 500):
     return x[:n_samples], y[:n_samples]
 
 def create_glass_df():
-    path = os.path.join(os.path.dirname(__file__), '../data/glass.csv')
+    path = os.path.join(os.path.dirname(__file__), './data/glass.csv')
     if not os.path.exists(path):
-        path = os.path.join(os.path.dirname(__file__), '../../data/glass.csv')
+        path = os.path.join(os.path.dirname(__file__), '../data/glass.csv')
+        if not os.path.exists(path):
+            path = os.path.join(os.path.dirname(__file__), '../../data/glass.csv')
     return pd.read_csv(path)
 
 def create_m4_df(n_samples: int = 2000):
@@ -137,7 +139,7 @@ def create_m4_df(n_samples: int = 2000):
 #=============================================================================================#
 #---------------------------------------------------------------------------------------------#
 
-#mnist_byte_df = create_mnist_bytearray_df()
-#mnist_tp = create_mnist_tuple()
-#glass_df = create_glass_df()
-#m4_df = create_m4_df()
+mnist_byte_df = create_mnist_bytearray_df()
+mnist_tp = create_mnist_tuple()
+glass_df = create_glass_df()
+m4_df = create_m4_df()

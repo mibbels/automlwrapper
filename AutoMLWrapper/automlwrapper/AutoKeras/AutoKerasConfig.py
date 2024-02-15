@@ -8,7 +8,18 @@ class AutoKerasConfig(Configuration):
 
     #---------------------------------------------------------------------------------------------#
     def get_params_constructor_by_key(self, key):
-        return self.map_user_params('constructor', model_type=key, user_hyperparameters=self.user_hyperparameters)
+        params=self.map_user_params(func_type='constructor', model_type=key, user_hyperparameters=self.user_hyperparameters)
+
+        """ Error if objective is not set and accuracy is not in evaluation_metric.
+        """
+        if params.get('objective', 0) == "":
+            if type(params['evaluation_metric']) == list:
+                params['evaluation_metric'].append('accuracy')
+            else :
+                params['evaluation_metric'] = [params.get('evaluation_metric',0), 'accuracy']
+
+        return params
+
 
     #---------------------------------------------------------------------------------------------#
     def get_params_fit_by_key(self, key):

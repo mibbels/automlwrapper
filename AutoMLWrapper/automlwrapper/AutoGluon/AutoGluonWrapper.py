@@ -151,6 +151,7 @@ class AutoGluonWrapper(AutoMLLibrary):
         
         if self.data_type == 'image' or self.data_type == 'text':
             self.model = MultiModalPredictor(
+                sample_data_path=data,
                 label=target_column,
                 path=self.output_path,
                 problem_type=self.autogluon_problem_type,
@@ -176,49 +177,28 @@ class AutoGluonWrapper(AutoMLLibrary):
             self.log_model_type = self.config._get_mlflow_details('TimeSeriesPredictor').get('__log_model_type', {})
         
 
-        if self.autogluon_problem_type in ['open_vocabulary_object_detection',]:
-            print('Zero-shot models will not be trained. The Model will now make predictions on the data and return the results as a dataframe.')
-            list_targets = self.config.get_params_predict_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 
-                                          else 'TabularPredictor' if self.problem_type == 'tabular' 
-                                          else 'MultiModalPredictor')['candidate_data']            
-            if target_column in data.columns:
-                data = data.drop(columns=[target_column])
-            else:
-                pass            
-            data['prompt'] = list_targets * len(data)
-            ev = self.model.predict(data, as_pandas=True)
-            return ev
-
-        if self.autogluon_problem_type in ['zero_shot_image_classification']:
-            print('Zero-shot models will not be trained. The Model will now make predictions on the data and return the results.')
-            list_targets = self.config.get_params_predict_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 
-                                          else 'TabularPredictor' if self.problem_type == 'tabular' 
-                                          else 'MultiModalPredictor')['candidate_data']            
-            if target_column in data.columns:
-                data = data.drop(columns=[target_column])
-            else:
-                pass            
-            data['text'] = list_targets * len(data)
-            ev = self.model.predict_proba(data, as_pandas=True)
-            return ev
-        
+        if self.autogluon_problem_type in ['open_vocabulary_object_detection', 'zero_shot_image_classification']:
+            self.eval_output = self._handle_zero_shot(data, target_column)
+            retun self.eval_output
+            
         
         self.fit_output = self.model.fit(
             **(self.data_preprocessing(data, target_column)),
-            **(self.config.get_params_fit_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 
-                                          else 'TabularPredictor' if self.problem_type == 'tabular' 
+            **(self.config.get_params_fit_by_key('TimeSeriesPredictor' if self.data_type == 'timeseries' 
+                                          else 'TabularPredictor' if self.data_type == 'tabular' 
                                           else 'MultiModalPredictor') or {})
         )
 
     #---------------------------------------------------------------------------------------------#
     def _evaluate_model(self, test_data, **kwargs):
-        # self.eval_output = self.model.evaluate(
-        #     data = test_data,
-        #     **kwargs
-        # )
-        # return self.eval_output
-        pred_proba = self.model.predict_proba(test_data)
-        return self.model.evaluate_predictions(test_data['Type'], pred_proba)
+        if self.autogluon_problem_type in ['open_vocabulary_object_detection', 'zero_shot_image_classification']:
+            print('Zero-shot models will not be evaluated. The predictions fromtraining have been returned.')
+            return self.eval_output
+
+        self.eval_output = self.model.evaluate(
+            data = test_data,
+            **kwargs
+        )
 
     #---------------------------------------------------------------------------------------------#
     def _create_model_info(self, n_models: int = 1):
@@ -288,3 +268,39 @@ class AutoGluonWrapper(AutoMLLibrary):
         }
 
         return model_info_args 
+    
+    #---------------------------------------------------------------------------------------------#
+    def _handle_zero_shot(self, data, target_column):
+        print('Zero-shot models will not be trained. The Model will now make predictions on the data and return the results.')
+        
+        list_targets = self.config.get_params_predict_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 
+                                          else 'TabularPredictor' if self.problem_type == 'tabular' 
+                                          else 'MultiModalPredictor')['candidate_data'] 
+        list_targets = self._convert_to_period_separated(list_targets)  
+
+        label_col = 'prompt' if self.autogluon_problem_type == 'zero_shot_image_classification' else 'text'       
+           
+        if target_column in data.columns:
+            data = data.drop(columns=[target_column])
+        else:
+            pass      
+
+        data[label_col] = list_targets * len(data)
+
+        if self.autogluon_problem_type == 'zero_shot_image_classification':
+            ev = self.model.predict_proba(data, as_pandas=True)
+        elif self.autogluon_problem_type == 'open_vocabulary_object_detection':
+            ev = self.model.predict(data, as_pandas=True)
+        
+        return ev
+
+    #---------------------------------------------------------------------------------------------#
+    def _convert_to_period_separated(self,list_targets):
+        if isinstance(list_targets, list):
+            return '.'.join(list_targets)
+        elif ',' in list_targets:
+            return list_targets.replace(',', '.')
+        elif '.' in list_targets:
+            return list_targets
+        else:
+            return list_targets

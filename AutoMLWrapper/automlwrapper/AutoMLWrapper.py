@@ -8,14 +8,15 @@ from .ModelInfo import ModelInfo
 from .MLflowHandler import MLflowHandler
 
 class AutoMLWrapper:
-    __slots__ = ['__library', '__library_name', '__is_initialized', '__out_path']
-    __properties__ = ['_library', '_library_name', '_is_initialized', '_out_path']
+    __slots__ = ['__library', '__library_name', '__is_initialized', '__out_path', '__extra_allowed_hyperparameters']
+    __properties__ = ['_library', '_library_name', '_is_initialized', '_out_path', '_extra_allowed_hyperparameters']
     #---------------------------------------------------------------------------------------------#
     def __init__(self, library_name: str) -> None:
         self.__library = None
         self.__library_name = library_name
         self.__is_initialized = False
         self.__out_path = None
+        self.__extra_allowed_hyperparameters = None
         
     #---------------------------------------------------------------------------------------------#
     def SetOutputDirectory(self, outputDirectory: str) -> None:
@@ -31,11 +32,19 @@ class AutoMLWrapper:
         self.__library._set_custom_data_preprocessing(custom_preprocessing_func)
 
     #---------------------------------------------------------------------------------------------#
-    def AllowExtraHyperparameters(self, extra_allowed_hyperparameters: list):
+    def AllowExtraHyperparameters(self, extra_allowed_hyperparameters: dict):
         """
-        Set extra hyperparameters as a list, that are not present in the config file.
+        Set extra hyperparameters for each fuunction-type (fit, predict, ...) as a dict list.
         """
-        self.__library._set_extra_allowed_hyperparameters(extra_allowed_hyperparameters)
+        # return if not dict of lists
+        if not isinstance(extra_allowed_hyperparameters, dict):
+            print("extra_allowed_hyperparameters must be a dict of lists")
+            return
+        if not all([isinstance(v, list) for v in extra_allowed_hyperparameters.values()]):
+            print("extra_allowed_hyperparameters must be a dict of lists")
+            return
+
+        self.__extra_allowed_hyperparameters = extra_allowed_hyperparameters
 
     #---------------------------------------------------------------------------------------------#
     @property
@@ -83,6 +92,15 @@ class AutoMLWrapper:
     def _out_path(self, out_path: str) -> None:
         ### add validation ??? ###
         self.__out_path = out_path
+    
+    #---------------------------------------------------------------------------------------------#
+    @property
+    def _extra_allowed_hyperparameters(self) -> dict:
+        return self.__extra_allowed_hyperparameters
+    
+    @_extra_allowed_hyperparameters.setter
+    def _extra_allowed_hyperparameters(self, extra_allowed_hyperparameters: dict) -> None:
+        raise NotImplementedError("This property is read-only")
 
     #---------------------------------------------------------------------------------------------#
     def Initialize(self, data_sample: Any, target_column: str, task_type: Optional[str] = None, data_type: Optional[str] = None, problem_type: Optional[str] = None) -> None:
@@ -118,6 +136,10 @@ class AutoMLWrapper:
         else:
             self.__is_initialized = False
 
+        
+        if self._extra_allowed_hyperparameters is not None:
+            self.__library._set_extra_allowed_hyperparameters(self._extra_allowed_hyperparameters)
+
     #---------------------------------------------------------------------------------------------#
     def Train(self, data: Any, target_column: str, task_type: Optional[str] = None, data_type: Optional[str] = None, 
               problem_type: Optional[str] = None, hyperparameters: Optional[Dict[str, Any]] = {}) -> None:
@@ -127,7 +149,7 @@ class AutoMLWrapper:
         if not self.__is_initialized:
             self.Initialize(data, target_column, task_type, data_type, problem_type)
 
-        self.__library._train_model(data, target_column, hyperparameters)
+        return self.__library._train_model(data, target_column, hyperparameters)
 
     #---------------------------------------------------------------------------------------------#
     def Evaluate(self, test_data: Any, **kwargs) -> float:
@@ -135,16 +157,17 @@ class AutoMLWrapper:
             raise ValueError("You must call 'train' before 'evaluate'")
         
         self.__library._evaluate_model(test_data, **kwargs)
+        return self.__library.eval_output
 
-    #---------------------------------------------------------------------------------------------#
-    def Output(self, nBestModels: int = 1, outputForMLFlow : bool = True):
-        if self.__library is None:
-            raise ValueError("You must call 'train' before 'output'")
+    # #---------------------------------------------------------------------------------------------#
+    # def Output(self, nBestModels: int = 1, outputForMLFlow : bool = True):
+    #     if self.__library is None:
+    #         raise ValueError("You must call 'train' before 'output'")
 
-        if outputForMLFlow:
-            return self.__library._create_model_info(nBestModels)
-        else:
-            pass
+    #     if outputForMLFlow:
+    #         return self.__library._create_model_info(nBestModels)
+    #     else:
+    #         pass
     
     #---------------------------------------------------------------------------------------------#
     def MlflowUploadBest(self, user_tags: dict):

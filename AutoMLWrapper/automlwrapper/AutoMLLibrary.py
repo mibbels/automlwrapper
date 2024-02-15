@@ -21,8 +21,9 @@ class AutoMLLibrary:
         self.eval_output =      None
         self.log_model_type =   None
         self.custom_data_preprocessing_func = None
-        
-    def _set_extra_allowed_hyperparameters(self, extra_allowed_hyperparameters: list):
+    
+    #---------------------------------------------------------------------------------------------#
+    def _set_extra_allowed_hyperparameters(self, extra_allowed_hyperparameters: dict):
         self.config.set_extra_allowed_hyperparameters(extra_allowed_hyperparameters)
         
     #---------------------------------------------------------------------------------------------#
