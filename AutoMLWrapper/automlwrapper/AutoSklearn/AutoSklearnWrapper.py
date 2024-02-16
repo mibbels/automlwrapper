@@ -2,7 +2,7 @@ try:
     from autosklearn.classification import AutoSklearnClassifier
     from autosklearn.regression import AutoSklearnRegressor
 except ImportError as e:
-    print(f"WARNING AutoSklearn could not be mported: \n {e}.")
+    print(f"WARNING AutoSklearn could not be mported. It might not b available in this environment. Err: \n {e}.")
 
 import os
 from datetime import datetime
@@ -74,15 +74,18 @@ class AutoSklearnWrapper(AutoMLLibrary):
             raise ValueError(f'data must be of type pandas DataFrame, but got {type(test_data)}')
 
         if 'target' not in kwargs:
-            raise ValueError('target column must be specified.')
+            raise ValueError('target column must be specified via target=....')
 
         X_test, y_test = self._separate_x_y_df(test_data, target_column=kwargs['target'])
 
-        self.score = self.model.evaluate(
-            X_test, y_test,
-            **kwargs
-        )
-        return self.eval_output
+        if kwargs.get('predict', False) == True:
+            self.eval_output = self.model.predict(X_test)
+        else:
+        
+            self.eval_output = self.model.score(
+                X_test, y_test
+            )
+            return self.eval_output
     
 
     #---------------------------------------------------------------------------------------------#

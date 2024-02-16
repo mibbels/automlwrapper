@@ -5,12 +5,23 @@ import numpy as np
 import pandas as pd
 
 from PIL import Image
-from keras.datasets import mnist
-from autogluon.multimodal.utils.misc import shopee_dataset
-from autogluon.core.utils.loaders import load_zip
-from autogluon.multimodal.utils.object_detection import from_coco
-from autogluon.core.utils.loaders import load_pd
 
+try:
+    from keras.datasets import mnist
+except ImportError:
+        print("WARNING: Keras not installed. Some functionalities might not be available.")
+        mnist = None
+try:
+    from autogluon.multimodal.utils.misc import shopee_dataset
+    from autogluon.core.utils.loaders import load_zip
+    from autogluon.multimodal.utils.object_detection import from_coco
+    from autogluon.core.utils.loaders import load_pd
+except ImportError:
+    print("WARNING: AutoGluon not installed. Some functionalities might not be available.")
+    shopee_dataset = None
+    load_zip = None
+    from_coco = None
+    load_pd = None
 
 
 def create_leaf_df(n_samples: int = 2000):
@@ -134,12 +145,3 @@ def create_glass_df():
 
 def create_m4_df(n_samples: int = 2000):
     return pd.read_csv("https://autogluon.s3.amazonaws.com/datasets/timeseries/m4_hourly_subset/train.csv")[:n_samples]
-
-#---------------------------------------------------------------------------------------------#
-#=============================================================================================#
-#---------------------------------------------------------------------------------------------#
-
-mnist_byte_df = create_mnist_bytearray_df()
-mnist_tp = create_mnist_tuple()
-glass_df = create_glass_df()
-m4_df = create_m4_df()

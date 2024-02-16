@@ -7,8 +7,18 @@ import zipfile
 import pandas as pd
 import numpy as np
 
-from pyspark.sql.session import SparkSession
-from pywebhdfs.webhdfs import PyWebHdfsClient
+try:
+    from pyspark.sql.session import SparkSession
+except ImportError:
+    print("WARNING: PySpark not installed. Some functionalities might not be available.")
+    SparkSession = None
+
+try: 
+    from pywebhdfs.webhdfs import PyWebHdfsClient
+except ImportError:
+    print("WARNING: pywebhdfs not installed. Some functionalities might not be available.")
+    PyWebHdfsClient = None
+
 from PIL import Image
 from sedarapi import SedarAPI
 from sklearn.model_selection import train_test_split
@@ -144,9 +154,11 @@ class SedarDataLoader:
             full_path = os.path.join(unzip_path, path)
             #file_name, file_ext = os.path.splitext(os.path.basename(path))
 
-            if 'images/' in path or 'image/' in path or 'data/' in path or 'img/' in path:
+            if (('images/' in path or 'image/' in path or 'data/' in path or 'img/' in path) and
+            path.endswith(('jpg', 'jpeg', 'png'))):
                 image_list.append(full_path)
-            elif 'mask/' in path or 'masks/' in path or 'label/' in path or 'labels/' in path:
+            elif (('mask/' in path or 'masks/' in path or 'label/' in path or 'labels/' in path) and
+            path.endswith(('jpg', 'jpeg', 'png'))):
                 mask_list.append(full_path)
         
         image_list = sorted(image_list)
@@ -259,6 +271,27 @@ class SedarDataLoader:
         y = np.array(labels)
 
         return x, y, class_mapping
+    
+    #--------------------------------------------------------------------------------------------#
+    @staticmethod
+    def class_df_to_np(df, target='label'):
+        images = []
+        labels = []
+
+        for index, row in df.iterrows():
+            try:
+                with Image.open(row['image']) as img:
+                    img_arr = np.array(img)
+                    if img.mode != 'RGB':
+                        img_arr = img_arr.reshape(img_arr.shape[0], img_arr.shape[1], 1) 
+                    images.append(img_arr)
+                    labels.append(row[target])
+            except IOError:
+                print(f"Could not read image: {row['image']}")
+        
+        x = np.array(images)
+        y = np.array(labels)
+        return x, y
     
     # --------------------------------------------------------------------------------------------#
     def zip_to_segmentation_np(self, zip_path, unzip_path):

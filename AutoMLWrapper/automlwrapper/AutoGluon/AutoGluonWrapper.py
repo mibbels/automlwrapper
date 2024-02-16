@@ -1,12 +1,18 @@
-from autogluon.tabular import TabularPredictor
-from autogluon.multimodal import MultiModalPredictor
-from autogluon.timeseries import TimeSeriesPredictor
+try:
+    from autogluon.tabular import TabularPredictor
+    from autogluon.multimodal import MultiModalPredictor
+    from autogluon.timeseries import TimeSeriesPredictor
+except ImportError as e:
+    print(f"WARNING AutoGluon could not be mported. It might not b available in this environment. Err: \n {e}.")
+
 
 import os
 import yaml
 import mlflow.pyfunc
 from datetime import datetime
 import pandas as pd
+from PIL import Image
+import numpy as np
 
 from ..AutoMLLibrary import AutoMLLibrary
 from ..ModelInfo import ModelInfo
@@ -125,33 +131,41 @@ class AutoGluonWrapper(AutoMLLibrary):
             raise Exception(f'Unknown data type {self.data_type}')
     
      #---------------------------------------------------------------------------------------------#
-    def data_preprocessing(self, data, target_column):
+    def data_preprocessing(self, data, target_column = 'label'):
         
         if self.custom_data_preprocessing_func is not None:
             data = self.custom_data_preprocessing_func(data)
             return data
         
-        # done automatically by autogluon
-        #if self.data_type == 'tabular':
-        #    train, test = self.split(data, target_column, type='pandas')
-        #    return {'train_data': train, 'tuning_data': test}
+        if self.autogluon_problem_type in ['semantic_segmentation']:
+            if data.iloc[0][target_column].endswith(('png', 'jpg', 'jpeg')):
+                path = os.path.dirname(data.iloc[0][target_column])
+                save = os.path.join(os.path.dirname(path), 'mask_conv')
 
-        return {'train_data': data}
+                data[target_column] = self._prepare_masks(data[target_column], save)
+        
+
+        return data
     
     #---------------------------------------------------------------------------------------------#
     def _train_model(self, data, target_column, user_hyperparameters: dict = {}):
         
         if type(data) not in [pd.DataFrame]:
-            raise ValueError(f'data must be of type pandas DataFrame, but got {type(data)}')
-        
-        
+            raise ValueError(f'data must be of type pandas DataFrame, but got {type(data)}')        
         
         self.config.map_hyperparameters(user_hyperparameters)
         self._map_problem_type()
         
+        data = self.data_preprocessing(data, target_column)
+            
+        if self.autogluon_problem_type in ['semantic_segmentation']:
+            sample_data = data.iloc[0][target_column]
+        else:
+            sample_data = data
+                
         if self.data_type == 'image' or self.data_type == 'text':
             self.model = MultiModalPredictor(
-                sample_data_path=data,
+                sample_data_path=sample_data,
                 label=target_column,
                 path=self.output_path,
                 problem_type=self.autogluon_problem_type,
@@ -179,11 +193,11 @@ class AutoGluonWrapper(AutoMLLibrary):
 
         if self.autogluon_problem_type in ['open_vocabulary_object_detection', 'zero_shot_image_classification']:
             self.eval_output = self._handle_zero_shot(data, target_column)
-            retun self.eval_output
+            return self.eval_output
             
         
         self.fit_output = self.model.fit(
-            **(self.data_preprocessing(data, target_column)),
+            train_data=data,
             **(self.config.get_params_fit_by_key('TimeSeriesPredictor' if self.data_type == 'timeseries' 
                                           else 'TabularPredictor' if self.data_type == 'tabular' 
                                           else 'MultiModalPredictor') or {})
@@ -195,8 +209,9 @@ class AutoGluonWrapper(AutoMLLibrary):
             print('Zero-shot models will not be evaluated. The predictions fromtraining have been returned.')
             return self.eval_output
 
+        target = kwargs.get('target', 'label')
         self.eval_output = self.model.evaluate(
-            data = test_data,
+            data = self.data_preprocessing(test_data, target)
             **kwargs
         )
 
@@ -246,7 +261,6 @@ class AutoGluonWrapper(AutoMLLibrary):
 
         return model_info_args
         
-      
     #---------------------------------------------------------------------------------------------#
     def _get_info_from_config_yaml(self):
         with open(self.output_path + '/config.yaml') as file:
@@ -304,3 +318,32 @@ class AutoGluonWrapper(AutoMLLibrary):
             return list_targets
         else:
             return list_targets
+    
+    #---------------------------------------------------------------------------------------------#
+    def _prepare_masks(self, mask_series, converted_mask_path):
+    
+        def convert_and_binarize(read_path, save_path):
+            with Image.open(read_path) as img:
+                img = img.convert('L')
+                img_array = np.array(img)
+                binary_array = np.where(img_array > 0, 1, 0)
+                binary_img = Image.fromarray(binary_array.astype(np.uint8) * 255, 'L')
+                binary_img.save(save_path, 'PNG')
+
+        if not os.path.exists(converted_mask_path):
+            os.makedirs(converted_mask_path)
+        else:
+            for file in os.listdir(converted_mask_path):
+                os.remove(os.path.join(converted_mask_path, file))
+                
+        for fullfile in mask_series:
+            if fullfile.endswith('.png') or fullfile.endswith('.jpg'):
+                filename = os.path.basename(fullfile)
+                save_path = os.path.join(converted_mask_path, filename)
+                convert_and_binarize(fullfile, save_path)
+        
+        new_masks = [os.path.join(converted_mask_path, filename)
+         for filename in os.listdir(converted_mask_path) 
+         if filename.endswith('.png')
+        ]
+        return new_masks

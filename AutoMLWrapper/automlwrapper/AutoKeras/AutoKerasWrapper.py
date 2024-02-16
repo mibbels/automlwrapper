@@ -1,5 +1,9 @@
-import autokeras as ak
-import keras
+try:
+    import autokeras as ak
+    import keras
+except ImportError as e:
+    print(f"WARNING AutoKeras could not be imported. It might not b available in this environment. Err: \n {e}.")
+
 import pandas as pd
 from datetime import datetime
 import os
@@ -9,6 +13,7 @@ from ..AutoMLLibrary import AutoMLLibrary
 from ..ModelInfo import ModelInfo
 from ..PyfuncModel import PyfuncModel
 from .AutoKerasConfig import AutoKerasConfig
+from ..SedarDataLoader import SedarDataLoader
 
 
 class AutoKerasWrapper(AutoMLLibrary):
@@ -29,10 +34,10 @@ class AutoKerasWrapper(AutoMLLibrary):
             data = self.custom_data_preprocessing_func(data)
             return data
         
-        if self.data_type == 'tabular' or self.data_type == 'timeseries':
-            x, y = self.separate(data, target, type='pandas')
-
-        elif self.data_type == 'image' or self.data_type == 'text':
+        if type(data) in [pd.DataFrame]:
+            x, y = SedarDataLoader.class_df_to_np(data, target=target)
+                       
+        elif type(data) in [tuple]:
             x, y = self.separate(data, target, type='tuple')
         
         return {'x': x, 'y': y}
@@ -141,7 +146,7 @@ class AutoKerasWrapper(AutoMLLibrary):
     #---------------------------------------------------------------------------------------------#
     def _evaluate_model(self, test_data, **kwargs):
         if type(test_data) not in [pd.DataFrame, tuple]:
-            raise ValueError(f'data must be of type pandas DataFrame or 2-tuple of numpy arrays, but got {type(data)}')
+            raise ValueError(f'data must be of type pandas DataFrame or 2-tuple of numpy arrays, but got {type(test_data)}')
       
 
         self.eval_output = self.model.evaluate(
