@@ -69,14 +69,12 @@ class AutoSklearnWrapper(AutoMLLibrary):
             )
     
     #---------------------------------------------------------------------------------------------#
-    def _evaluate_model(self, test_data, **kwargs):
+    def _evaluate_model(self, test_data, target_column, **kwargs):
         if type(test_data) not in [pd.DataFrame]:
             raise ValueError(f'data must be of type pandas DataFrame, but got {type(test_data)}')
 
-        if 'target' not in kwargs:
-            raise ValueError('target column must be specified via target=....')
 
-        X_test, y_test = self._separate_x_y_df(test_data, target_column=kwargs['target'])
+        X_test, y_test = self._separate_x_y_df(test_data, target_column=target_column)
 
         if kwargs.get('predict', False) == True:
             self.eval_output = self.model.predict(X_test)

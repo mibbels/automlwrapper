@@ -28,15 +28,18 @@ class AutoKerasWrapper(AutoMLLibrary):
                                          f'AutoMLOutput/autokeras{datetime.timestamp(datetime.now())}')
         
     #---------------------------------------------------------------------------------------------#
-    def data_preprocessing(self, data, target):
+    def _data_preprocessing(self, data, target):
 
         if self.custom_data_preprocessing_func is not None:
             data = self.custom_data_preprocessing_func(data)
             return data
         
         if type(data) in [pd.DataFrame]:
-            x, y = SedarDataLoader.class_df_to_np(data, target=target)
-                       
+            if self.data_type == 'image' and self.task_type == 'classification':
+                x, y = SedarDataLoader.class_df_to_np(data, target=target)
+            else:
+                x, y = self.separate(data, target, type='pandas')      
+        
         elif type(data) in [tuple]:
             x, y = self.separate(data, target, type='tuple')
         
@@ -78,7 +81,7 @@ class AutoKerasWrapper(AutoMLLibrary):
             self.log_model_type = self.config._get_mlflow_details('StructuredDataRegressor').get('__log_model_type', {})
 
         self.fit_output = self.model.fit(
-            **(self.data_preprocessing(data, target_column)),
+            **(self._data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('StructuredDataClassifier' if self.task_type == 'classification' 
                                           else 'StructuredDataRegressor' if self.task_type == 'regression'
                                           else None) or {})
@@ -102,7 +105,7 @@ class AutoKerasWrapper(AutoMLLibrary):
             self.log_model_type = self.config._get_mlflow_details('ImageRegressor').get('__log_model_type', {})
 
         self.fit_output = self.model.fit(
-            **(self.data_preprocessing(data, target_column)),
+            **(self._data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('ImageClassifier' if self.task_type == 'classification' 
                                           else 'ImageRegressor' if self.task_type == 'regression'
                                           else None) or {})
@@ -124,7 +127,7 @@ class AutoKerasWrapper(AutoMLLibrary):
             self.log_model_type = self.config._get_mlflow_details('TextRegressor').get('__log_model_type', {})
 
         self.fit_output = self.model.fit(
-            **(self.data_preprocessing(data, target_column)),
+            **(self._data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('TextClassifier' if self.task_type == 'classification' 
                                           else 'TextRegressor' if self.task_type == 'regression'
                                           else None) or {})
@@ -139,18 +142,18 @@ class AutoKerasWrapper(AutoMLLibrary):
         self.log_model_type = self.config._get_mlflow_details('TimeseriesForecaster').get('__log_model_type', {})
 
         self.fit_output = self.model.fit(
-            **(self.data_preprocessing(data, target_column)),
+            **(self._data_preprocessing(data, target_column)),
             **(self.config.get_params_fit_by_key('TimeseriesForecaster') or {})
             )
 
     #---------------------------------------------------------------------------------------------#
-    def _evaluate_model(self, test_data, **kwargs):
+    def _evaluate_model(self, test_data, target_column, **kwargs):
         if type(test_data) not in [pd.DataFrame, tuple]:
             raise ValueError(f'data must be of type pandas DataFrame or 2-tuple of numpy arrays, but got {type(test_data)}')
       
 
         self.eval_output = self.model.evaluate(
-            **(self.data_preprocessing(test_data, None)),
+            **(self._data_preprocessing(test_data, target_column)),
             **kwargs
         )
         return self.eval_output

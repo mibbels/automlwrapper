@@ -12,11 +12,12 @@ class AutoKerasConfig(Configuration):
 
         """ Error if objective is not set and accuracy is not in evaluation_metric.
         """
-        if params.get('objective', 0) == "":
-            if type(params['evaluation_metric']) == list:
-                params['evaluation_metric'].append('accuracy')
-            else :
-                params['evaluation_metric'] = [params.get('evaluation_metric',0), 'accuracy']
+        if type(params.get('objective', None)) == str:
+            if params.get('objective', "") == "" and 'accuracy' not in params.get('evaluation_metric', []):
+                if type(params['evaluation_metric']) == list:
+                    params['evaluation_metric'].append('accuracy')
+                else :
+                    params['evaluation_metric'] = [params.get('evaluation_metric',0), 'accuracy']
 
         return params
 

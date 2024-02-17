@@ -151,11 +151,11 @@ class AutoMLWrapper:
         return self.__library._train_model(data, target_column, hyperparameters)
 
     #---------------------------------------------------------------------------------------------#
-    def Evaluate(self, test_data: Any, **kwargs) -> float:
+    def Evaluate(self, test_data: Any,  target_column: str, **kwargs) -> float:
         if self.__library is None:
             raise ValueError("You must call 'train' before 'evaluate'")
         
-        self.__library._evaluate_model(test_data, **kwargs)
+        self.__library._evaluate_model(test_data,  target_column, **kwargs)
         return self.__library.eval_output
 
     # #---------------------------------------------------------------------------------------------#

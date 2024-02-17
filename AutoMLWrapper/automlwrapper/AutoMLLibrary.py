@@ -172,5 +172,7 @@ class AutoMLLibrary:
         raise NotImplementedError
 
     #---------------------------------------------------------------------------------------------#
-    def _evaluate_model(self, test_data: Union[pd.DataFrame, np.ndarray]) -> float:
+    def _evaluate_model(self,
+                        test_data: Union[pd.DataFrame, np.ndarray],
+                        target_column : str) -> float:
         raise NotImplementedError

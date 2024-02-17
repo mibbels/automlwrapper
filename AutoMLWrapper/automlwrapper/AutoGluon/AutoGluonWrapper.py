@@ -204,14 +204,13 @@ class AutoGluonWrapper(AutoMLLibrary):
         )
 
     #---------------------------------------------------------------------------------------------#
-    def _evaluate_model(self, test_data, **kwargs):
+    def _evaluate_model(self, test_data, target_column, **kwargs):
         if self.autogluon_problem_type in ['open_vocabulary_object_detection', 'zero_shot_image_classification']:
             print('Zero-shot models will not be evaluated. The predictions fromtraining have been returned.')
             return self.eval_output
 
-        target = kwargs.get('target', 'label')
         self.eval_output = self.model.evaluate(
-            data = self.data_preprocessing(test_data, target)
+            data = self.data_preprocessing(test_data, target_column)
             **kwargs
         )
 
