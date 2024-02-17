@@ -28,7 +28,7 @@ class AutoKerasWrapper(AutoMLLibrary):
                                          f'AutoMLOutput/autokeras{datetime.timestamp(datetime.now())}')
         
     #---------------------------------------------------------------------------------------------#
-    def _data_preprocessing(self, data, target):
+    def _data_preprocessing(self, data, target, as_tuple = False):
 
         if self.custom_data_preprocessing_func is not None:
             data = self.custom_data_preprocessing_func(data)
@@ -43,10 +43,12 @@ class AutoKerasWrapper(AutoMLLibrary):
         elif type(data) in [tuple]:
             x, y = self.separate(data, target, type='tuple')
         
+        if as_tuple:
+            return (x, y)
         return {'x': x, 'y': y}
     
     #---------------------------------------------------------------------------------------------#
-    def _train_model(self, data, target_column, user_hyperparameters: dict = {}):
+    def _train_model(self, data, val_data, target_column, user_hyperparameters: dict = {}):
 
         if type(data) not in [pd.DataFrame, tuple]:
             raise ValueError(f'data must be of type pandas DataFrame or 2-tuple of numpy arrays, but got {type(data)}')
@@ -54,18 +56,18 @@ class AutoKerasWrapper(AutoMLLibrary):
         self.config.map_hyperparameters(user_hyperparameters)
 
         if self.data_type == 'text':
-            self._train_text(data, target_column, user_hyperparameters)
+            self._train_text(data, val_data, target_column, user_hyperparameters)
         elif self.data_type == 'tabular':
-            self._train_structured(data, target_column, user_hyperparameters)
+            self._train_structured(data, val_data, target_column, user_hyperparameters)
         elif self.data_type == 'image':
-            self._train_image(data, target_column, user_hyperparameters)
+            self._train_image(data, val_data, target_column, user_hyperparameters)
 
 
     def _get_params(self, func_type: str, model_type: str):
         return self.config.get_params(func_type, model_type)
     
     #---------------------------------------------------------------------------------------------#
-    def _train_structured(self, data, target_column, user_hyperparameters: dict = {}):
+    def _train_structured(self, data, val_data, target_column, user_hyperparameters: dict = {}):
         if self.task_type == "classification":
             self.model = ak.StructuredDataClassifier(
                 directory=self.output_path,
@@ -82,6 +84,7 @@ class AutoKerasWrapper(AutoMLLibrary):
 
         self.fit_output = self.model.fit(
             **(self._data_preprocessing(data, target_column)),
+            validation_data=self._data_preprocessing(val_data, target_column, as_tuple=True),
             **(self.config.get_params_fit_by_key('StructuredDataClassifier' if self.task_type == 'classification' 
                                           else 'StructuredDataRegressor' if self.task_type == 'regression'
                                           else None) or {})
@@ -89,7 +92,7 @@ class AutoKerasWrapper(AutoMLLibrary):
 
 
     #---------------------------------------------------------------------------------------------#
-    def _train_image(self, data, target_column, user_hyperparameters: dict = {}):
+    def _train_image(self, data, val_data, target_column, user_hyperparameters: dict = {}):
         if self.task_type == "classification":
             self.model = ak.ImageClassifier(
                 directory=self.output_path,
@@ -106,13 +109,14 @@ class AutoKerasWrapper(AutoMLLibrary):
 
         self.fit_output = self.model.fit(
             **(self._data_preprocessing(data, target_column)),
+            validation_data=self._data_preprocessing(val_data, target_column, as_tuple=True),
             **(self.config.get_params_fit_by_key('ImageClassifier' if self.task_type == 'classification' 
                                           else 'ImageRegressor' if self.task_type == 'regression'
                                           else None) or {})
             )
                     
     #---------------------------------------------------------------------------------------------#
-    def _train_text(self, data, target_column, user_hyperparameters: dict = {}):
+    def _train_text(self, data, val_data, target_column, user_hyperparameters: dict = {}):
         if self.task_type == "classification":
             self.model = ak.TextClassifier(
                 directory=self.output_path,
@@ -128,13 +132,14 @@ class AutoKerasWrapper(AutoMLLibrary):
 
         self.fit_output = self.model.fit(
             **(self._data_preprocessing(data, target_column)),
+            validation_data=self._data_preprocessing(val_data, target_column, as_tuple=True),
             **(self.config.get_params_fit_by_key('TextClassifier' if self.task_type == 'classification' 
                                           else 'TextRegressor' if self.task_type == 'regression'
                                           else None) or {})
             )
 
     #---------------------------------------------------------------------------------------------#
-    def _train_timeseries(self, data, target_column, user_hyperparameters: dict = {}):
+    def _train_timeseries(self, data, val_data, target_column, user_hyperparameters: dict = {}):
         self.model = ak.TimeseriesForecaster(
             directory=self.output_path,
             **(self.config.get_params_constructor_by_key('TimeseriesForecaster') or {})
@@ -143,6 +148,7 @@ class AutoKerasWrapper(AutoMLLibrary):
 
         self.fit_output = self.model.fit(
             **(self._data_preprocessing(data, target_column)),
+            validation_data=self._data_preprocessing(val_data, target_column, as_tuple=True),
             **(self.config.get_params_fit_by_key('TimeseriesForecaster') or {})
             )
 

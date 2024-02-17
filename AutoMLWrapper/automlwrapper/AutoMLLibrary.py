@@ -161,8 +161,9 @@ class AutoMLLibrary:
     
     #=============================================================================================#
     def _train_model(self, 
-                     data: Union[pd.DataFrame, np.ndarray],
-                     target_column : str,
+                     train_data: Union[pd.DataFrame, np.ndarray],
+                     validation_data: Union[pd.DataFrame, np.ndarray] = None,
+                     target_column : str = 'label',
                      user_hyperparameters: Dict[str, Any] = {}) -> None :
 
         raise NotImplementedError

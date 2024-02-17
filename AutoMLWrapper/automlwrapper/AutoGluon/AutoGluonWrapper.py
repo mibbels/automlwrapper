@@ -148,7 +148,7 @@ class AutoGluonWrapper(AutoMLLibrary):
         return data
     
     #---------------------------------------------------------------------------------------------#
-    def _train_model(self, data, target_column, user_hyperparameters: dict = {}):
+    def _train_model(self, data, val_data,  target_column, user_hyperparameters: dict = {}):
         
         if type(data) not in [pd.DataFrame]:
             raise ValueError(f'data must be of type pandas DataFrame, but got {type(data)}')        
@@ -198,6 +198,7 @@ class AutoGluonWrapper(AutoMLLibrary):
         
         self.fit_output = self.model.fit(
             train_data=data,
+            tuning_data=val_data,
             **(self.config.get_params_fit_by_key('TimeSeriesPredictor' if self.data_type == 'timeseries' 
                                           else 'TabularPredictor' if self.data_type == 'tabular' 
                                           else 'MultiModalPredictor') or {})

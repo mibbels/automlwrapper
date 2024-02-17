@@ -140,15 +140,15 @@ class AutoMLWrapper:
             self.__library._set_extra_allowed_hyperparameters(self._extra_allowed_hyperparameters)
 
     #---------------------------------------------------------------------------------------------#
-    def Train(self, data: Any, target_column: str, task_type: Optional[str] = None, data_type: Optional[str] = None, 
+    def Train(self, train_data: Any, validation_data: Any = None, target_column: str = 'label', task_type: Optional[str] = None, data_type: Optional[str] = None, 
               problem_type: Optional[str] = None, hyperparameters: Optional[Dict[str, Any]] = {}) -> None:
         """ Invoke the underlying AutoML library to train a model.
         """
 
         if not self.__is_initialized:
-            self.Initialize(data, target_column, task_type, data_type, problem_type)
+            self.Initialize(train_data, target_column, task_type, data_type, problem_type)
 
-        return self.__library._train_model(data, target_column, hyperparameters)
+        return self.__library._train_model(train_data, validation_data, target_column, hyperparameters)
 
     #---------------------------------------------------------------------------------------------#
     def Evaluate(self, test_data: Any,  target_column: str, **kwargs) -> float:

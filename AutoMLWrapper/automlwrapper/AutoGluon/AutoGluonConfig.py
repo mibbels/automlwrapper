@@ -28,7 +28,8 @@ class AutoGluonConfig(Configuration):
             hyperparameter_tune_kwargs for TabularPredictor requires scheduler and searcher.
             hyperparameter_tune_kwargs for MultiModalPredictor, TimeSeriesPredictor would require concrete search space.
         """
-
+            
+        
         if key in ['MultiModalPredictor', 'TimeSeriesPredictor']:
             try:
                 params['hyperparameter_tune_kwargs'].pop('num_trials', None)
@@ -39,6 +40,7 @@ class AutoGluonConfig(Configuration):
                 print("AutoMLWrapper: Warning - num_classes not found in params. Setting num_classes to 1 in order to use binary_iou as eval_metric.")
 
         elif key in ['TabularPredictor']:
+            params['use_bag_holdout'] = True
             try:
                params['hyperparameter_tune_kwargs']['scheduler'] = 'local'
                params['hyperparameter_tune_kwargs']['searcher'] = 'auto'

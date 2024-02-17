@@ -28,17 +28,22 @@ class AutoSklearnWrapper(AutoMLLibrary):
                                          f'AutoMLOutput/autosklearn{datetime.timestamp(datetime.now())}')
 
     #---------------------------------------------------------------------------------------------#
-    def _data_preprocessing(self, data, target_column):
+    def _data_preprocessing(self, data, val_data, target_column):
         
         if self.custom_data_preprocessing_func is not None:
             data = self.custom_data_preprocessing_func(data)
             return data
         
+        if val_data is not None:
+            X_train, y_train = self.separate(data, target_column, type='pandas')
+            X_val, y_val = self.separate(val_data, target_column, type='pandas')
+            return {'X': X_train, 'y': y_train, 'X_val': X_val, 'y_val': y_val}
+        
         X_train, y_train, X_test, y_test = self.split_and_separate(data, target_column, ratio=0.2, type='pandas')
         return {'X': X_train, 'y': y_train, 'X_test': X_test, 'y_test': y_test}
     
     #---------------------------------------------------------------------------------------------#
-    def _train_model(self, data, target_column : str, user_hyperparameters : dict = {}):
+    def _train_model(self, data, val_data, target_column : str, user_hyperparameters : dict = {}):
         
         if type(data) not in [pd.DataFrame]:
             raise ValueError(f'data must be of type pandas DataFrame, but got {type(data)}')
@@ -62,7 +67,7 @@ class AutoSklearnWrapper(AutoMLLibrary):
             self.log_model_type = self.config._get_mlflow_details('AutoSklearnRegressor').get('__log_model_type', {})
 
         self.fit_output = self.model.fit(
-            **(self._data_preprocessing(data, target_column)),
+            **(self._data_preprocessing(data, val_data, target_column)),
             **(self.config.get_params_fit_by_key('AutoSklearnClassifier' if self._set_task_type == 'classification' 
                                           else 'AutoSklearnRegressor' if self._set_task_type == 'regression'
                                           else None) or {})
