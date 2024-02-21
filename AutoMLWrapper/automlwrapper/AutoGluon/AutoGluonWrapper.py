@@ -142,8 +142,12 @@ class AutoGluonWrapper(AutoMLLibrary):
                 path = os.path.dirname(data.iloc[0][target_column])
                 save = os.path.join(os.path.dirname(path), 'mask_conv')
 
-                data[target_column] = self._prepare_masks(data[target_column], save)
-        
+                # sort data[target_column] to ensure that the masks are in the same order as the images
+                data[target_column] = data[target_column].sort_values().reset_index(drop=True)
+                
+                edited_masks = self._prepare_masks(data[target_column], save)
+
+                data[target_column] = edited_masks
 
         return data
     
@@ -336,15 +340,13 @@ class AutoGluonWrapper(AutoMLLibrary):
         else:
             for file in os.listdir(converted_mask_path):
                 os.remove(os.path.join(converted_mask_path, file))
-                
+        
+        new_masks = []
         for fullfile in mask_series:
             if fullfile.endswith('.png') or fullfile.endswith('.jpg'):
                 filename = os.path.basename(fullfile)
                 save_path = os.path.join(converted_mask_path, filename)
                 convert_and_binarize(fullfile, save_path)
+                new_masks.append(save_path)
         
-        new_masks = [os.path.join(converted_mask_path, filename)
-         for filename in os.listdir(converted_mask_path) 
-         if filename.endswith('.png')
-        ]
         return new_masks

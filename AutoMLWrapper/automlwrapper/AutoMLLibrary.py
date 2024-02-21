@@ -160,11 +160,7 @@ class AutoMLLibrary:
     ##### Implementation of the following methods is required for each AutoML library         #####
     
     #=============================================================================================#
-    def _train_model(self, 
-                     train_data: Union[pd.DataFrame, np.ndarray],
-                     validation_data: Union[pd.DataFrame, np.ndarray] = None,
-                     target_column : str = 'label',
-                     user_hyperparameters: Dict[str, Any] = {}) -> None :
+    def _train_model(self):
 
         raise NotImplementedError
 
@@ -173,7 +169,5 @@ class AutoMLLibrary:
         raise NotImplementedError
 
     #---------------------------------------------------------------------------------------------#
-    def _evaluate_model(self,
-                        test_data: Union[pd.DataFrame, np.ndarray],
-                        target_column : str) -> float:
+    def _evaluate_model(self): 
         raise NotImplementedError

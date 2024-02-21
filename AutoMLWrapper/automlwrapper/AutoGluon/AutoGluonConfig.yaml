@@ -67,7 +67,7 @@ MultiModalPredictor:
           - mar_large
         __dtype: str
         __user_mapping: eval_metric
-        __hint: Metric to use during training. Segmentation;[iou, ber, sm] object detection; [map_..., mar_...]
+        __hint: Metric to use during training. Segmentation;[iou] object-detection; [map_..., mar_...]
       validation_metric:
         __has_values: true
         __values:
