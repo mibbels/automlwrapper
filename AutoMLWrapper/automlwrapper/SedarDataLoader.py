@@ -143,8 +143,34 @@ class SedarDataLoader:
 
             return [os.path.join(file_save_location, file[5:]) for file in filenames]
 
+    #---------------------------------------------------------------------------------------------#
+    def _convert_masks_for_gluon(self, mask_list, replace = True):
+    
+        def convert_and_binarize(read_path):
+   
+            with Image.open(read_path) as img:
+                img = img.convert('L')
+                img_array = np.array(img)
+                binary_array = np.where(img_array > 0, 1, 0)
+                binary_img = Image.fromarray(binary_array.astype(np.uint8) * 255, 'L')
+                if replace:
+                    dest = read_path
+                else:
+                    dest = read_path + '_converted'
+                binary_img.save(dest , 'PNG')
+
+                return dest
+        
+        new_masks = []
+        for full_file in mask_list:
+            if full_file.endswith('.png') or full_file.endswith('.jpg'):
+                replaced_file = convert_and_binarize(full_file)
+                new_masks.append(replaced_file)
+        
+        return new_masks
+    
     # --------------------------------------------------------------------------------------------#
-    def zip_to_segmentation_df_gluon(self, zip_path, unzip_path):
+    def zip_to_segmentation_df_gluon(self, zip_path, unzip_path, convert_masks=True):
         file_paths = self.extract_zip(zip_path, unzip_path)
 
         image_list = []
@@ -163,6 +189,9 @@ class SedarDataLoader:
         
         image_list = sorted(image_list)
         mask_list = sorted(mask_list)
+
+        if convert_masks:
+            mask_list = self._convert_masks_for_gluon(mask_list, os.path.join(unzip_path, 'converted_masks'))
 
         df = pd.DataFrame(data={'image': image_list, 'label': mask_list})
         return df

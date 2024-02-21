@@ -137,17 +137,17 @@ class AutoGluonWrapper(AutoMLLibrary):
             data = self.custom_data_preprocessing_func(data)
             return data
         
-        if self.autogluon_problem_type in ['semantic_segmentation']:
-            if data.iloc[0][target_column].endswith(('png', 'jpg', 'jpeg')):
-                path = os.path.dirname(data.iloc[0][target_column])
-                save = os.path.join(os.path.dirname(path), 'mask_conv')
+        # if self.autogluon_problem_type in ['semantic_segmentation']:
+        #     if data.iloc[0][target_column].endswith(('png', 'jpg', 'jpeg')):
+        #         path = os.path.dirname(data.iloc[0][target_column])
+        #         save = os.path.join(os.path.dirname(path), 'mask_conv')
 
-                # sort data[target_column] to ensure that the masks are in the same order as the images
-                data[target_column] = data[target_column].sort_values().reset_index(drop=True)
+        #         # sort data[target_column] to ensure that the masks are in the same order as the images
+        #         data[target_column] = data[target_column].sort_values().reset_index(drop=True)
                 
-                edited_masks = self._prepare_masks(data[target_column], save)
+        #         edited_masks = self._prepare_masks(data[target_column], save)
 
-                data[target_column] = edited_masks
+        #         data[target_column] = edited_masks
 
         return data
     
@@ -214,9 +214,9 @@ class AutoGluonWrapper(AutoMLLibrary):
         if self.autogluon_problem_type in ['open_vocabulary_object_detection', 'zero_shot_image_classification']:
             print('Zero-shot models will not be evaluated. The predictions fromtraining have been returned.')
             return self.eval_output
-
+        
         self.eval_output = self.model.evaluate(
-            data = self.data_preprocessing(test_data, target_column)
+            data = self.data_preprocessing(test_data, target_column),    
             **kwargs
         )
 
@@ -324,29 +324,29 @@ class AutoGluonWrapper(AutoMLLibrary):
         else:
             return list_targets
     
-    #---------------------------------------------------------------------------------------------#
-    def _prepare_masks(self, mask_series, converted_mask_path):
+    # #---------------------------------------------------------------------------------------------#
+    # def _prepare_masks(self, mask_series, converted_mask_path):
     
-        def convert_and_binarize(read_path, save_path):
-            with Image.open(read_path) as img:
-                img = img.convert('L')
-                img_array = np.array(img)
-                binary_array = np.where(img_array > 0, 1, 0)
-                binary_img = Image.fromarray(binary_array.astype(np.uint8) * 255, 'L')
-                binary_img.save(save_path, 'PNG')
+    #     def convert_and_binarize(read_path, save_path):
+    #         with Image.open(read_path) as img:
+    #             img = img.convert('L')
+    #             img_array = np.array(img)
+    #             binary_array = np.where(img_array > 0, 1, 0)
+    #             binary_img = Image.fromarray(binary_array.astype(np.uint8) * 255, 'L')
+    #             binary_img.save(save_path, 'PNG')
 
-        if not os.path.exists(converted_mask_path):
-            os.makedirs(converted_mask_path)
-        else:
-            for file in os.listdir(converted_mask_path):
-                os.remove(os.path.join(converted_mask_path, file))
+    #     if not os.path.exists(converted_mask_path):
+    #         os.makedirs(converted_mask_path)
+    #     else:
+    #         for file in os.listdir(converted_mask_path):
+    #             os.remove(os.path.join(converted_mask_path, file))
         
-        new_masks = []
-        for fullfile in mask_series:
-            if fullfile.endswith('.png') or fullfile.endswith('.jpg'):
-                filename = os.path.basename(fullfile)
-                save_path = os.path.join(converted_mask_path, filename)
-                convert_and_binarize(fullfile, save_path)
-                new_masks.append(save_path)
+    #     new_masks = []
+    #     for fullfile in mask_series:
+    #         if fullfile.endswith('.png') or fullfile.endswith('.jpg'):
+    #             filename = os.path.basename(fullfile)
+    #             save_path = os.path.join(converted_mask_path, filename)
+    #             convert_and_binarize(fullfile, save_path)
+    #             new_masks.append(save_path)
         
-        return new_masks
+    #     return new_masks
