@@ -164,7 +164,7 @@ class SedarDataLoader:
         image_list = sorted(image_list)
         mask_list = sorted(mask_list)
 
-        df = pd.DataFrame(data={'image': image_list, 'mask': mask_list})
+        df = pd.DataFrame(data={'image': image_list, 'label': mask_list})
         return df
 
     # --------------------------------------------------------------------------------------------#
@@ -207,8 +207,14 @@ class SedarDataLoader:
         # df = df.drop(columns=['tmp_id'])
         #------------------------------------------------
         # AutoGluon will: convert from (x, y, w, h) to (xmin, ymin, xmax, ymax) and clip bound
-        # einfacher mir AutoGluon Funktion
+        # einfacher mit AutoGluon Funktion
         from autogluon.multimodal.utils.object_detection import from_coco
+
+        label_file = os.path.join(unzip_path, label_file)
+        root = os.path.dirname(label_file)
+        if os.path.basename(root) == 'annotation':
+            root = os.path.dirname(label_file)
+
         df = from_coco(label_file)
         return df
 

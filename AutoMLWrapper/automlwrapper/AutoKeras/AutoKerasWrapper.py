@@ -38,11 +38,13 @@ class AutoKerasWrapper(AutoMLLibrary):
             if self.data_type == 'image' and self.task_type == 'classification':
                 x, y = SedarDataLoader.class_df_to_np(data, target=target)
             else:
-                x, y = self.separate(data, target, type='pandas')      
-        
+                x, y = self.separate(data, target, type='pandas') 
+                
         elif type(data) in [tuple]:
             x, y = self.separate(data, target, type='tuple')
         
+        if data is None:
+            return None
         if as_tuple:
             return (x, y)
         return {'x': x, 'y': y}

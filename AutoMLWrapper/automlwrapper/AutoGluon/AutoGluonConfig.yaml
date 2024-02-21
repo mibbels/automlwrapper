@@ -3,6 +3,17 @@ MultiModalPredictor:
     __log_model_type: pyfunc
   __hyperparameter_details:
     constructor:
+      verbosity:
+        __has_values: true
+        __dtype: int
+        __values:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+        __user_mapping: verbosity
+        __hint: Verosity of the output. ( 0 None to 4 Debug).
       presets:
         __has_values: true
         __dtype: str
@@ -10,6 +21,9 @@ MultiModalPredictor:
           - best_quality
           - high_quality
           - medium_quality
+          - best_quality_hpo
+          - high_quality_hpo
+          - medium_quality_hpo
         __user_mapping: preset
         __hint: Preset for the quality of the model. Higher quality models take longer to train.
       eval_metric:
@@ -53,7 +67,7 @@ MultiModalPredictor:
           - mar_large
         __dtype: str
         __user_mapping: eval_metric
-        __hint: Metric to use during training. Segmentation;[iou, ber, sm, mae] object detection; [map_..., mar_...]
+        __hint: Metric to use during training. Segmentation;[iou, ber, sm] object detection; [map_..., mar_...]
       validation_metric:
         __has_values: true
         __values:
@@ -107,17 +121,6 @@ MultiModalPredictor:
         __dtype: int
         __user_mapping: time_limit
         __hint: Time limit for the experiment in seconds.
-      verbosity:
-        __has_values: true
-        __dtype: int
-        __values:
-          - 0
-          - 1
-          - 2
-          - 3
-          - 4
-        __user_mapping: verbosity
-        __hint: Verosity of the output. ( 0 None to 4 Debug).
       __extra_args:
         hyperparameter_tune_kwargs:
           __dtype: dict
@@ -139,6 +142,17 @@ TabularPredictor:
     __log_model_type: pyfunc
   __hyperparameter_details:
     constructor:
+      verbosity:
+        __has_values: true
+        __dtype: int
+        __values:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+        __user_mapping: verbosity
+        __hint: Verosity of the output. ( 0 None to 4 Debug).
       eval_metric:
         __has_values: true
         __values:
@@ -189,17 +203,6 @@ TabularPredictor:
         __dtype: bool
         __user_mapping: stacking_ensemble
         __hint: Whether to create a stacking ensemble of models. Increases training time.
-      verbosity:
-        __has_values: true
-        __dtype: int
-        __values:
-          - 0
-          - 1
-          - 2
-          - 3
-          - 4
-        __user_mapping: verbosity
-        __hint: Verosity of the output. ( 0 None to 4 Debug).
       __extra_args:
         hyperparameter_tune_kwargs:
           __dtype: dict
@@ -225,6 +228,17 @@ TimeSeriesPredictor:
     __log_model_type: pyfunc
   __hyperparameter_mappings:
     constructor:
+      verbosity:
+        __has_values: true
+        __dtype: int
+        __values:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+        __user_mapping: verbosity
+        __hint: Verosity of the output. ( 0 None to 4 Debug).
       prediction_length:
         __has_values: false
         __dtype: int
@@ -258,17 +272,6 @@ TimeSeriesPredictor:
           - fast training
         __user_mapping: preset
         __hint: Preset for the quality of the model. Higher quality models take longer to train.
-      verbosity:
-        __has_values: true
-        __dtype: int
-        __values:
-          - 0
-          - 1
-          - 2
-          - 3
-          - 4
-        __user_mapping: verbosity
-        __hint: Verosity of the output. ( 0 None to 4 Debug).
       __extra_args:
         hyperparameter_tune_kwargs:
           __dtype: dict

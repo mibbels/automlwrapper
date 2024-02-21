@@ -32,6 +32,9 @@ ImageClassifier:
           - sparse_categorical_accuracy
           - top_k_categorical_accuracy
           - sparse_top_k_categorical_accuracy
+          - AUC
+          - Precision
+          - Recall
           - binary_crossentropy
           - categorical_crossentropy
           - sparse_categorical_crossentropy
@@ -142,6 +145,9 @@ TextClassifier:
           - sparse_categorical_accuracy
           - top_k_categorical_accuracy
           - sparse_top_k_categorical_accuracy
+          - AUC
+          - Precision
+          - Recall
           - binary_crossentropy
           - categorical_crossentropy
           - sparse_categorical_crossentropy
@@ -246,12 +252,15 @@ StructuredDataClassifier:
       metrics:
         __has_values: true
         __values:
-          - binary_crossentropy
+          - accuracy 
           - binary_accuracy
           - categorical_accuracy
           - sparse_categorical_accuracy
           - top_k_categorical_accuracy
           - sparse_top_k_categorical_accuracy
+          - AUC
+          - Precision
+          - Recall
           - binary_crossentropy
           - categorical_crossentropy
           - sparse_categorical_crossentropy

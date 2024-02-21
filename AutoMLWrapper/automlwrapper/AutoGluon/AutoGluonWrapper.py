@@ -157,6 +157,7 @@ class AutoGluonWrapper(AutoMLLibrary):
         self._map_problem_type()
         
         data = self.data_preprocessing(data, target_column)
+        val_data = self.data_preprocessing(val_data, target_column)
             
         if self.autogluon_problem_type in ['semantic_segmentation']:
             sample_data = data.iloc[0][target_column]
