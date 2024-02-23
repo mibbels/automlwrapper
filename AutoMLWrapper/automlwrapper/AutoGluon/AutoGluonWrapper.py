@@ -212,7 +212,7 @@ class AutoGluonWrapper(AutoMLLibrary):
     #---------------------------------------------------------------------------------------------#
     def _evaluate_model(self, test_data, target_column, **kwargs):
         if self.autogluon_problem_type in ['open_vocabulary_object_detection', 'zero_shot_image_classification']:
-            print('Zero-shot models will not be evaluated. The predictions fromtraining have been returned.')
+            print('Zero-shot models will not be evaluated. The predictions from the training data have been returned.')
             return self.eval_output
         
         self.eval_output = self.model.evaluate(
@@ -292,10 +292,12 @@ class AutoGluonWrapper(AutoMLLibrary):
     def _handle_zero_shot(self, data, target_column):
         print('Zero-shot models will not be trained. The Model will now make predictions on the data and return the results.')
         
-        list_targets = self.config.get_params_predict_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 
+        targets = self.config.get_params_predict_by_key('TimeSeriesPredictor' if self.problem_type == 'timeseries' 
                                           else 'TabularPredictor' if self.problem_type == 'tabular' 
                                           else 'MultiModalPredictor')['candidate_data'] 
-        list_targets = self._convert_to_period_separated(list_targets)  
+        
+        targets = self._convert_to_zero_shot_prompt(targets, 
+                                                    classification=True if self.autogluon_problem_type in ['zero_shot_image_classification'] else False)  
 
         label_col = 'prompt' if self.autogluon_problem_type == 'zero_shot_image_classification' else 'text'       
            
@@ -304,25 +306,44 @@ class AutoGluonWrapper(AutoMLLibrary):
         else:
             pass      
 
-        data[label_col] = list_targets * len(data)
+        data[label_col] = [targets] * len(data)
 
         if self.autogluon_problem_type == 'zero_shot_image_classification':
-            ev = self.model.predict_proba(data, as_pandas=True)
+            ev = self.model.predict(
+                data['image'].to_list(),
+                {"text": targets},
+                as_pandas=True
+                )
+            
         elif self.autogluon_problem_type == 'open_vocabulary_object_detection':
             ev = self.model.predict(data, as_pandas=True)
         
         return ev
 
     #---------------------------------------------------------------------------------------------#
-    def _convert_to_period_separated(self,list_targets):
-        if isinstance(list_targets, list):
-            return '.'.join(list_targets)
-        elif ',' in list_targets:
-            return list_targets.replace(',', '.')
-        elif '.' in list_targets:
-            return list_targets
+    def _convert_to_zero_shot_prompt(self, targets, classification=False):
+        
+        # return a list of targets
+        if classification:
+            if isinstance(targets, list):
+                return targets 
+            elif isinstance(targets, str):
+                if ',' in targets:
+                    return targets.split(',')
+                elif '.' in targets:
+                    return targets.split('.')
+                else:
+                    return [targets]
+        
+        #return a period-separated string
         else:
-            return list_targets
+            if isinstance(targets, list):
+                return ['. '.join(targets)]
+            elif isinstance(targets, str):
+                if ',' in targets:
+                    return [targets.replace(',', '. ')]
+                else:
+                    return [targets]
     
     # #---------------------------------------------------------------------------------------------#
     # def _prepare_masks(self, mask_series, converted_mask_path):

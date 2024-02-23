@@ -317,8 +317,12 @@ class SedarDataLoader:
             try:
                 with Image.open(row['image']) as img:
                     img_arr = np.array(img)
-                    if img.mode != 'RGB':
+
+                    if img.mode in ['L', '1'] and len(img_arr.shape) == 2: 
                         img_arr = img_arr.reshape(img_arr.shape[0], img_arr.shape[1], 1) 
+                    if img.mode == 'RGBA':
+                        img = img.convert('RGB')
+
                     images.append(img_arr)
                     labels.append(row[target])
             except IOError:
@@ -418,6 +422,8 @@ class SedarDataLoader:
         from sklearn.ensemble import RandomForestClassifier
         from tabpfn.scripts import tabular_metrics
         import openai
+
+        
 
         if data_type == 'tabular' and task_type == 'classification':
             df = self.query_data(workspace_id, dataset_id)
