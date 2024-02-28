@@ -100,10 +100,8 @@ class AutoGluonWrapper(AutoMLLibrary):
                     raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
             
             elif self.task_type == 'segmentation':
-                if self.problem_type == 'segmentation':
-                    self.autogluon_problem_type = 'semantic_segmentation'
-                else:
-                    raise Exception(f'Unknown problem type {self.problem_type} for {self.task_type}')
+                self.autogluon_problem_type = 'semantic_segmentation'
+            
 
         elif self.data_type == 'text':
             if self.task_type == 'classification':

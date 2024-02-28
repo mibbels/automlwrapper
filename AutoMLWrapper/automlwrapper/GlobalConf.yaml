@@ -30,7 +30,8 @@ AutoGluon:
                 - similarity
             segmentation:
               __problem_types:
-                - segmentation
+                - binary
+                - multiclass
         text:
           __task_types:
             similarity:

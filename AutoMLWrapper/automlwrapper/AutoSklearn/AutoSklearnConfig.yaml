@@ -24,11 +24,17 @@ AutoSklearnClassifier:
           - accuracy
           - balanced_accuracy
           - f1
+          - f1_macro
+          - f1_micro
           - f1_weighted
           - roc_auc
           - precision
+          - precision_macro
+          - precision_weighted
           - average_precision
           - recall
+          - recall_macro
+          - recall_weighted
           - log_loss
         __dtype: str
         __user_mapping: evaluation_metric
