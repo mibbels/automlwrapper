@@ -1,5 +1,8 @@
 from ..Configuration import Configuration
-import autosklearn
+try:
+    import autosklearn
+except ImportError as e:
+    print(f"WARNING AutoSklearn could not be mported. It might not b available in this environment. Err: \n {e}.")
 
 class AutoSklearnConfig(Configuration):
     __slots__ = []
