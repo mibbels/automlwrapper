@@ -2,7 +2,7 @@ from ..Configuration import Configuration
 try:
     import autosklearn
 except ImportError as e:
-    print(f"WARNING AutoSklearn could not be mported. It might not b available in this environment. Err: \n {e}.")
+    print(f"WARNING AutoSklearn could not be imported. It might not be available in this environment. Err: \n {e}.")
 
 class AutoSklearnConfig(Configuration):
     __slots__ = []
@@ -23,6 +23,8 @@ class AutoSklearnConfig(Configuration):
             params['n_jobs'] = 5
         
         metric = params.get('metric', "")
+        if metric == '':
+            pass
         if metric == 'accuracy':
             params['metric'] = autosklearn.metrics.accuracy
         elif metric == 'balanced_accuracy':

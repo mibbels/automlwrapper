@@ -244,7 +244,7 @@ class SedarDataLoader:
         if os.path.basename(root) == 'annotation':
             root = os.path.dirname(label_file)
 
-        df = from_coco(label_file)
+        df = from_coco(label_file, root=root)
         return df
 
     # --------------------------------------------------------------------------------------------#
@@ -270,42 +270,42 @@ class SedarDataLoader:
         return df, class_mapping
 
     
-    # --------------------------------------------------------------------------------------------#
-    def zip_to_class_np(self, zip_path, unzip_path):
-        file_paths = self.extract_zip(zip_path, unzip_path)
+    # # --------------------------------------------------------------------------------------------#
+    # def zip_to_class_np(self, zip_path, unzip_path):
+    #     file_paths = self.extract_zip(zip_path, unzip_path)
 
-        class_mapping = {}
-        data = []
+    #     class_mapping = {}
+    #     data = []
     
-        for path in file_paths:
+    #     for path in file_paths:
             
-            directory, file_name = os.path.split(path)
+    #         directory, file_name = os.path.split(path)
             
-            if directory and file_name:  # FILE INSIDE FOLDER
-                if directory not in class_mapping:
-                    class_mapping[directory] = len(class_mapping)
+    #         if directory and file_name:  # FILE INSIDE FOLDER
+    #             if directory not in class_mapping:
+    #                 class_mapping[directory] = len(class_mapping)
                 
-                full_path = os.path.join(unzip_path, path)
-                class_id = class_mapping[directory]
-                data.append([full_path, class_id])
+    #             full_path = os.path.join(unzip_path, path)
+    #             class_id = class_mapping[directory]
+    #             data.append([full_path, class_id])
     
-        images = []
-        labels = []
-        for image_path, label in data:
-            try:
-                with Image.open(image_path) as img:
-                    img_arr = np.array(img)
-                    if img.mode != 'RGB':
-                        img_arr = img_arr.reshape(img_arr.shape[0], img_arr.shape[1], 1) 
-                    images.append(img_arr)
-                    labels.append(label)
-            except IOError:
-                print(f"Could not read image: {image_path}")
+    #     images = []
+    #     labels = []
+    #     for image_path, label in data:
+    #         try:
+    #             with Image.open(image_path) as img:
+    #                 img_arr = np.array(img)
+    #                 if img.mode != 'RGB':
+    #                     img_arr = img_arr.reshape(img_arr.shape[0], img_arr.shape[1], 1) 
+    #                 images.append(img_arr)
+    #                 labels.append(label)
+    #         except IOError:
+    #             print(f"Could not read image: {image_path}")
 
-        x = np.array(images)
-        y = np.array(labels)
+    #     x = np.array(images)
+    #     y = np.array(labels)
 
-        return x, y, class_mapping
+    #     return x, y, class_mapping
     
     #--------------------------------------------------------------------------------------------#
     @staticmethod
@@ -316,12 +316,14 @@ class SedarDataLoader:
         for index, row in df.iterrows():
             try:
                 with Image.open(row['image']) as img:
-                    img_arr = np.array(img)
+                    
 
                     if img.mode in ['L', '1'] and len(img_arr.shape) == 2: 
+                        img_arr = np.array(img)
                         img_arr = img_arr.reshape(img_arr.shape[0], img_arr.shape[1], 1) 
                     if img.mode == 'RGBA':
                         img = img.convert('RGB')
+                        img_arr = np.array(img)
 
                     images.append(img_arr)
                     labels.append(row[target])
@@ -422,8 +424,6 @@ class SedarDataLoader:
         from sklearn.ensemble import RandomForestClassifier
         from tabpfn.scripts import tabular_metrics
         import openai
-
-        
 
         if data_type == 'tabular' and task_type == 'classification':
             df = self.query_data(workspace_id, dataset_id)

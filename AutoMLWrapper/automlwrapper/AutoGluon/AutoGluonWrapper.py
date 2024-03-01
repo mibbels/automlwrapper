@@ -314,7 +314,7 @@ class AutoGluonWrapper(AutoMLLibrary):
                 )
             
         elif self.autogluon_problem_type == 'open_vocabulary_object_detection':
-            ev = self.model.predict(data, as_pandas=True)
+            ev = self.model.predict(data, as_pandas=False)
         
         return ev
 
