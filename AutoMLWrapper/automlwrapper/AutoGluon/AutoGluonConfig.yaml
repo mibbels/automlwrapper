@@ -173,6 +173,8 @@ TabularPredictor:
           - recall_micro
           - recall_weighted
           - log_loss
+          - mean_squared_error
+          - mean_absolute_error
           - root_mean_squared_error
           - r2
           - symmetric_mean_absolute_percentage_error

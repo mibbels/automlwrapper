@@ -191,7 +191,7 @@ class SedarDataLoader:
         mask_list = sorted(mask_list)
 
         if convert_masks:
-            mask_list = self._convert_masks_for_gluon(mask_list, os.path.join(unzip_path, 'converted_masks'))
+            mask_list = self._convert_masks_for_gluon(mask_list)#, os.path.join(unzip_path, 'converted_masks'))
 
         df = pd.DataFrame(data={'image': image_list, 'label': mask_list})
         return df
@@ -241,8 +241,8 @@ class SedarDataLoader:
 
         label_file = os.path.join(unzip_path, label_file)
         root = os.path.dirname(label_file)
-        if os.path.basename(root) == 'annotation':
-            root = os.path.dirname(label_file)
+        if os.path.basename(root) == 'annotations':
+            root = os.path.dirname(root)
 
         df = from_coco(label_file, root=root)
         return df
