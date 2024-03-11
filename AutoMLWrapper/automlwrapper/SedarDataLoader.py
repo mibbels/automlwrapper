@@ -21,7 +21,7 @@ except ImportError:
 
 from PIL import Image
 from sedarapi import SedarAPI
-from constants import *
+from .constants import *
 from sklearn.model_selection import train_test_split
 
 

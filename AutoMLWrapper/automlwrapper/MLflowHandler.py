@@ -26,8 +26,8 @@ class MLflowHandler:
                 mlflow.log_metric(key, value)
             for key, value in model_info_dict['images'].items():
                 mlflow.log_image(value, key)
-            for key, value in model_info_dict['files'].items():
-                mlflow.log_artifact(value, key)
+            for path in model_info_dict['files']:
+                mlflow.log_artifact(path)
 
             mlflow.pyfunc.log_model("model", python_model=self.model_info.model_object)
 

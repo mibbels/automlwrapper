@@ -1,6 +1,6 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from PIL import Image
-from PyfuncModel import PyfuncModel
+from .PyfuncModel import PyfuncModel
 class ModelInfo:
     #---------------------------------------------------------------------------------------------#
     def __init__(
@@ -13,7 +13,7 @@ class ModelInfo:
         model_tags_dict: Dict[str, str] = {},
         model_path: Optional[str] = None,
         model_imgs_as_pil_dict: Optional[Dict[str, Image.Image]] = {},
-        model_files_as_paths_dict: Optional[Dict[str, str]] = {}
+        model_files_as_path_list: Optional[List[str, str]] = {}
     ):
         self.model_name = model_name
         self.model_library = model_library
@@ -23,7 +23,7 @@ class ModelInfo:
         self.model_metrics_dict = model_metrics_dict
         self.model_tags_dict = model_tags_dict
         self.model_images_dict = model_imgs_as_pil_dict
-        self.model_files_as_paths_dict = model_files_as_paths_dict
+        self.model_files_as_path_list = model_files_as_path_list
     
     #---------------------------------------------------------------------------------------------#
     def to_dict(self):
@@ -38,6 +38,6 @@ class ModelInfo:
             'model': self.model_object,
             **({'model_path': self.model_path} if self.model_path is not None else {}),
             'images': self.model_images_dict,
-            'files': self.model_files_as_paths_dict
+            'files': self.model_files_as_path_list
 
         }

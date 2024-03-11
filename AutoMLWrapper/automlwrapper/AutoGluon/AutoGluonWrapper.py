@@ -214,8 +214,8 @@ class AutoGluonWrapper(AutoMLLibrary):
 
         model_infos = []
 
-        if self.is_hpo:
-            trial_scores = self._get_hpo_trial_scores()
+        #if self.is_hpo:
+        #    trial_scores = self._get_hpo_trial_scores()
             
 
         for i in range(n_models):
@@ -224,14 +224,14 @@ class AutoGluonWrapper(AutoMLLibrary):
                     **(self._get_info_from_fit_summary(i) or {})
                 )
             elif self.data_type in ['image', 'text']:
-                if self.is_hpo:
-                    model_info = self._get_info_from_hpo(i, trial_scores)
+                #if self.is_hpo:
+                #    model_info = self._get_info_from_hpo(i, trial_scores)
                     
-                else:
+                #else:
                     model_info = self._get_info_from_config_yaml()
                     
                     if n_models > 1:
-                        print(f'Only one model was trained. The model info for the first model will be returned.')
+                        print(f'Only one model is available. The model info for this model will be returned.')
                         model_infos.append(model_info)
                         break
             
@@ -318,14 +318,9 @@ class AutoGluonWrapper(AutoMLLibrary):
             hparams = {**hparams, **({'val_transforms': val_transforms} if val_transforms else {})}
             
             if from_hparams_yaml:
-                files = {
-                    path + '/config.yaml' : 'config.yaml',
-                    path + '/hparams.yaml': 'hparams.yaml'
-                }
+                files = [ path + '/config.yaml', path + '/hparams.yaml']
             else:
-                files = {
-                    path + '/config.yaml' : 'config.yaml'
-                }
+                files = [ path + '/config.yaml',]
 
         elif from_params_json:
             models = out_config['root']['model.names']
@@ -337,14 +332,9 @@ class AutoGluonWrapper(AutoMLLibrary):
             hparams = {**hparams, **({'train_transforms': out_config['optimization.learning_rate']} if 'optimization.learning_rate' in out_config else {})}
             
             if from_hparams_yaml:
-                files = {
-                    path + '/params.json' : 'params.json',
-                    path + '/hparams.yaml': 'hparams.yaml'
-                }
+                files = [ path + '/config.yaml', path + '/hparams.yaml']
             else:
-                files = {
-                    path + '/params.json' : 'params.json'
-                }
+                files = [ path + '/config.yaml',]
         
         mi = ModelInfo(
             model_name = model_name,
@@ -353,7 +343,7 @@ class AutoGluonWrapper(AutoMLLibrary):
             model_path = self.output_path + 'models/',
             model_params_dict = {k: v for k, v in hparams.items() if v is not None},
             model_metrics_dict = self.model.fit_summary(0),
-            model_files_as_paths_dict = files,
+            model_files_as_path_list = files,
             model_tags_dict = {
                 'data_type': self.data_type,
                 'task_type': self.task_type,
@@ -374,10 +364,10 @@ class AutoGluonWrapper(AutoMLLibrary):
 
         
             val_score_col = [col for col in progress.columns if col.startswith('val_')][0]      
-            series = progress.loc[progress[val_score_col[0]].nlargest(1).index[-1]]
+            series = progress.loc[progress[val_score_col].nlargest(1).index[-1]]
 
             trial_id = series['trial_id']
-            trial_scores[trial_id] = series[val_score_col[0]]
+            trial_scores[trial_id] = series[val_score_col]
             
         # i.e. score is loss, lower is better        
         reverse = False if list(trial_scores.values())[0] < 0 else True
