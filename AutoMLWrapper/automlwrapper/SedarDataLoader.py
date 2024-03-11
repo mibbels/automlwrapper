@@ -21,6 +21,7 @@ except ImportError:
 
 from PIL import Image
 from sedarapi import SedarAPI
+from constants import *
 from sklearn.model_selection import train_test_split
 
 
@@ -163,14 +164,14 @@ class SedarDataLoader:
         
         new_masks = []
         for full_file in mask_list:
-            if full_file.endswith('.png') or full_file.endswith('.jpg'):
+            if isImgFile(full_file):
                 replaced_file = convert_and_binarize(full_file)
                 new_masks.append(replaced_file)
         
         return new_masks
     
     # --------------------------------------------------------------------------------------------#
-    def zip_to_segmentation_df_gluon(self, zip_path, unzip_path, convert_masks=True):
+    def segmentationAsDataFrame(self, zip_path, unzip_path, convert_masks=True):
         file_paths = self.extract_zip(zip_path, unzip_path)
 
         image_list = []
@@ -197,46 +198,11 @@ class SedarDataLoader:
         return df
 
     # --------------------------------------------------------------------------------------------#
-    def zip_to_coco_df_gluon(self, zip_path, unzip_path):
+    def cocoAsDataFrame(self, zip_path, unzip_path):
         file_paths = self.extract_zip(zip_path, unzip_path)
 
         label_file = [path for path in file_paths if path.endswith('.json')][0]        
 
-        # image_location = [path.split('/')[:-1] for path in file_paths if path.endswith('.jpg') or path.endswith('.png')][0]
-        # image_location = '/'.join(image_location)
-
-        # annotation_json = None
-        # with open(os.path.join(unzip_path, label_file)) as f:
-        #     annotation_json = json.load(f)
-         
-        # image_list = []
-        # image_id_list = []
-        # for image_info in annotation_json['images']:
-        #     image_id = image_info['id']
-        #     file_name = image_info['file_name']
-
-        #     image_full_path = os.path.join(unzip_path, file_name)
-        #     if not os.path.exists(image_full_path):
-        #         image_full_path = os.path.join(unzip_path, image_location, file_name.split('/')[-1])
-
-        #     image_list.append(image_full_path)
-        #     image_id_list.append(image_id)
-
-        # df = pd.DataFrame(data={'tmp_id': image_id_list, 'image': image_list})
-
-        # bbox_mapping = {}
-        # for annotation in annotation_json["annotations"]:
-        #     image_id = annotation["image_id"]
-        #     bbox = annotation["bbox"]
-        #     if image_id not in bbox_mapping:
-        #         bbox_mapping[image_id] = []
-        #     bbox_mapping[image_id].append(bbox)
-
-        # df['label'] = df['tmp_id'].apply(lambda x: bbox_mapping.get(x, []))
-        # df = df.drop(columns=['tmp_id'])
-        #------------------------------------------------
-        # AutoGluon will: convert from (x, y, w, h) to (xmin, ymin, xmax, ymax) and clip bound
-        # einfacher mit AutoGluon Funktion
         from autogluon.multimodal.utils.object_detection import from_coco
 
         label_file = os.path.join(unzip_path, label_file)
@@ -248,7 +214,7 @@ class SedarDataLoader:
         return df
 
     # --------------------------------------------------------------------------------------------#
-    def zip_to_class_df_gluon(self, zip_path, unzip_path):
+    def classificationAsDataFrame(self, zip_path, unzip_path):
         file_paths = self.extract_zip(zip_path, unzip_path)
 
         class_mapping = {}
@@ -268,48 +234,10 @@ class SedarDataLoader:
     
         df = pd.DataFrame(data, columns=['image', 'label'])
         return df, class_mapping
-
-    
-    # # --------------------------------------------------------------------------------------------#
-    # def zip_to_class_np(self, zip_path, unzip_path):
-    #     file_paths = self.extract_zip(zip_path, unzip_path)
-
-    #     class_mapping = {}
-    #     data = []
-    
-    #     for path in file_paths:
-            
-    #         directory, file_name = os.path.split(path)
-            
-    #         if directory and file_name:  # FILE INSIDE FOLDER
-    #             if directory not in class_mapping:
-    #                 class_mapping[directory] = len(class_mapping)
-                
-    #             full_path = os.path.join(unzip_path, path)
-    #             class_id = class_mapping[directory]
-    #             data.append([full_path, class_id])
-    
-    #     images = []
-    #     labels = []
-    #     for image_path, label in data:
-    #         try:
-    #             with Image.open(image_path) as img:
-    #                 img_arr = np.array(img)
-    #                 if img.mode != 'RGB':
-    #                     img_arr = img_arr.reshape(img_arr.shape[0], img_arr.shape[1], 1) 
-    #                 images.append(img_arr)
-    #                 labels.append(label)
-    #         except IOError:
-    #             print(f"Could not read image: {image_path}")
-
-    #     x = np.array(images)
-    #     y = np.array(labels)
-
-    #     return x, y, class_mapping
     
     #--------------------------------------------------------------------------------------------#
     @staticmethod
-    def class_df_to_np(df, target='label'):
+    def imageDataFrameToNumpyXy(df, target='label', task_type='classification'):
         images = []
         labels = []
 
@@ -326,16 +254,25 @@ class SedarDataLoader:
                         img_arr = np.array(img)
 
                     images.append(img_arr)
-                    labels.append(row[target])
+                    
+                    if isTaskClassification(task_type):
+                        labels.append(row[target])
+                    elif isTaskSegmentation(task_type):
+                        raise NotImplementedError('Segmentation not implemented yet.')
+                    elif isTaskObjectDetection(task_type):
+                        raise NotImplementedError('Object detection not implemented yet.')
+                    else:
+                        raise Exception(f'Unknown type {task_type} for image data.')
+
             except IOError:
                 print(f"Could not read image: {row['image']}")
         
-        x = np.array(images)
+        X = np.array(images)
         y = np.array(labels)
-        return x, y
+        return X, y
     
     # --------------------------------------------------------------------------------------------#
-    def zip_to_segmentation_np(self, zip_path, unzip_path):
+    def segmentationAsNumpyXy(self, zip_path, unzip_path):
         file_paths = self.extract_zip(zip_path, unzip_path)
 
         image_paths = []
@@ -425,7 +362,7 @@ class SedarDataLoader:
         from tabpfn.scripts import tabular_metrics
         import openai
 
-        if data_type == 'tabular' and task_type == 'classification':
+        if isDataTypeTabular(data_type) and isTaskClassification(task_type):
             df = self.query_data(workspace_id, dataset_id)
             df_train, df_test = self.split_train_test(df)
 
@@ -457,7 +394,7 @@ class SedarDataLoader:
 
             return caafe_clf.apply_code(df)
 
-        elif data_type == 'image' and task_type == 'classification':
+        elif isDataTypeImage(data_type) and isTaskClassification(task_type): 
             loc = self.query_data(workspace_id, dataset_id, file_save_location=file_save_location)
             X, y, map = self.zip_to_class_np(loc[0], file_save_location+'_unzipped')
 
@@ -482,9 +419,9 @@ class SedarDataLoader:
 
             return X_, y_, map
         
-        elif data_type == 'image' and task_type == 'segmentation':
+        elif isDataTypeImage(data_type) and isTaskSegmentation(task_type):
             loc = self.query_data(workspace_id, dataset_id, file_save_location=file_save_location)
-            X, y = self.zip_to_segmentation_np(loc[0], file_save_location+'_unzipped')
+            X, y = self.segmentationAsNumpyXy(loc[0], file_save_location+'_unzipped')
 
             caafe_clf = CAAFEImageSegmentor(
                 llm_model=model,

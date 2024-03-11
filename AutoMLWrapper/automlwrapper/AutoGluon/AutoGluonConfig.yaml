@@ -128,7 +128,24 @@ MultiModalPredictor:
               __has_values: false
               __dtype: int
               __user_mapping: num_trials
-              __hint: Number of different models to try
+              __hint: Number of different models to try.
+        hyperparameters:
+          __dtype: dict
+          optimization.learning_rate:
+            __has_values: false
+            __dtype: float
+            __user_mapping: learning_rate
+            __hint: Learning rate for the model.
+          optimization.max_epochs:
+            __has_values: false
+            __dtype: int
+            __user_mapping: max_epochs
+            __hint: Maximum number of epochs to train the model.
+          optimization.patience:
+            __has_values: false
+            __dtype: int
+            __user_mapping: patience
+            __hint: Number of epochs to wait for improvement before stopping the training. Used for early stopping.
 
     predict:
       candidate_data:
@@ -222,7 +239,7 @@ TabularPredictor:
               - cv
               - holdout
             __user_mapping: validation_type
-            __hint: Method for validation if stacking is enabled
+            __hint: Method for validation if stacking is enabled. Choose either cross validation (cv) or holdout validation.
         
 
 TimeSeriesPredictor:

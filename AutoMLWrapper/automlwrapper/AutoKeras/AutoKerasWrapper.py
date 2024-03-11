@@ -2,7 +2,7 @@ try:
     import autokeras as ak
     import keras
 except ImportError as e:
-    print(f"WARNING AutoKeras could not be imported. It might not b available in this environment. Err: \n {e}.")
+    print(f"WARNING AutoKeras could not be imported. It might not be available in this environment. Err: \n {e}.")
 
 import pandas as pd
 from datetime import datetime

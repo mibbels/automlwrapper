@@ -13,6 +13,7 @@ from datetime import datetime
 import pandas as pd
 from PIL import Image
 import numpy as np
+import json
 
 from ..AutoMLLibrary import AutoMLLibrary
 from ..ModelInfo import ModelInfo
@@ -20,11 +21,12 @@ from ..PyfuncModel import PyfuncModel
 from .AutoGluonConfig import AutoGluonConfig
 
 class AutoGluonWrapper(AutoMLLibrary):
-    __slots__ = ['autogluon_problem_type']
+    __slots__ = ['autogluon_problem_type', 'is_hpo']
     #---------------------------------------------------------------------------------------------#
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.autogluon_problem_type = None
+        self.is_hpo = False
         self.config = AutoGluonConfig(os.path.join(os.path.dirname(__file__), 'AutoGluonConfig.yaml'))
         if not os.path.exists(os.path.join(os.getcwd(), 'AutoMLOutput')):
             os.makedirs(os.path.join(os.getcwd(), 'AutoMLOutput'))
@@ -134,26 +136,15 @@ class AutoGluonWrapper(AutoMLLibrary):
         if self.custom_data_preprocessing_func is not None:
             data = self.custom_data_preprocessing_func(data)
             return data
-        
-        # if self.autogluon_problem_type in ['semantic_segmentation']:
-        #     if data.iloc[0][target_column].endswith(('png', 'jpg', 'jpeg')):
-        #         path = os.path.dirname(data.iloc[0][target_column])
-        #         save = os.path.join(os.path.dirname(path), 'mask_conv')
-
-        #         # sort data[target_column] to ensure that the masks are in the same order as the images
-        #         data[target_column] = data[target_column].sort_values().reset_index(drop=True)
-                
-        #         edited_masks = self._prepare_masks(data[target_column], save)
-
-        #         data[target_column] = edited_masks
-
         return data
     
     #---------------------------------------------------------------------------------------------#
     def _train_model(self, data, val_data,  target_column, user_hyperparameters: dict = {}):
         
         if type(data) not in [pd.DataFrame]:
-            raise ValueError(f'data must be of type pandas DataFrame, but got {type(data)}')        
+            raise ValueError(f'data must be of type pandas DataFrame, but got {type(data)}')  
+
+        self.is_hpo = True if 'hpo' in user_hyperparameters.get('preset', '') else False      
         
         self.config.map_hyperparameters(user_hyperparameters)
         self._map_problem_type()
@@ -221,24 +212,32 @@ class AutoGluonWrapper(AutoMLLibrary):
     #---------------------------------------------------------------------------------------------#
     def _create_model_info(self, n_models: int = 1):
 
-        best_models_info = []
+        model_infos = []
+
+        if self.is_hpo:
+            trial_scores = self._get_hpo_trial_scores()
+            
+
         for i in range(n_models):
             if self.data_type in ['tabular', 'timeseries']:
                 model_info = ModelInfo(
                     **(self._get_info_from_fit_summary(i) or {})
                 )
             elif self.data_type in ['image', 'text']:
-                model_info = ModelInfo(
-                    **(self._get_info_from_config_yaml() or {})
-                )
-
-            best_models_info.append(model_info)
-
-        return best_models_info
-    
-    #---------------------------------------------------------------------------------------------#
-    def _get_info_from_eval(self):
-        pass
+                if self.is_hpo:
+                    model_info = self._get_info_from_hpo(i, trial_scores)
+                    
+                else:
+                    model_info = self._get_info_from_config_yaml()
+                    
+                    if n_models > 1:
+                        print(f'Only one model was trained. The model info for the first model will be returned.')
+                        model_infos.append(model_info)
+                        break
+            
+            model_infos.append(model_info)
+        
+        return model_infos
 
     #---------------------------------------------------------------------------------------------#
     def  _get_info_from_fit_summary(self, n_th_model):
@@ -250,42 +249,152 @@ class AutoGluonWrapper(AutoMLLibrary):
         except KeyError:
             raise ValueError(f'No more than {n_th_model-1} models found. Please try at max {len(df_leaderboard)} models.')
                     
-        model_info_args = {
-            'model_name': dict_summary['model_types'].get(model_name, None),
-            'model_library': 'autogluon',
-            'model_object': PyfuncModel('autogluon', self.model),
-            'model_path': self.output_path + 'models/',
-            'model_params_dict': dict_summary['model_hyperparams'].get(model_name, {}),
-            'model_metrics_dict': {
+        mi = ModelInfo(
+            model_name = dict_summary['model_types'].get(model_name, None),
+            model_library = 'autogluon',
+            model_object = PyfuncModel('autogluon', self.model),
+            model_path = self.output_path + 'models/',
+            model_params_dict = dict_summary['model_hyperparams'].get(model_name, {}),
+            model_metrics_dict = {
                 'val_score': df_leaderboard.loc[df_leaderboard['model'] == model_name, 'score_val'].values[0]
             },
-            'model_tags_dict': {},
-        }
+            model_tags_dict = {
+                'data_type': self.data_type,
+                'task_type': self.task_type,
+                'problem_type': self.problem_type,
+            },
+        )
 
-        return model_info_args
+        return mi
         
     #---------------------------------------------------------------------------------------------#
-    def _get_info_from_config_yaml(self):
-        with open(self.output_path + '/config.yaml') as file:
-            out_config = yaml.load(file, Loader=yaml.FullLoader)
-        
-        with open(self.output_path + '/hparams.yaml') as file:
-            hparams = yaml.load(file, Loader=yaml.FullLoader)
-        
-        model_name = out_config['model'].get('names', ['neural net ' + self.data_type + ' ' + self.task_type])[0]
-        
-        model_info_args = {
-            'model_name': model_name,
-            'model_library': 'autogluon',
-            'model_object': PyfuncModel('autogluon', self.model),
-            'model_path': self.output_path + 'models/',
-            'model_params_dict': {k: v for k, v in hparams.items() if v is not None}, #out_config.get('optimization', {}),
-            'model_metrics_dict': self.model.fit_summary(0),
-            'model_tags_dict': {'checkpoint_name': out_config['model'].get(model_name, {}).get('checkpoint_name', '')},
-        }
+    def _get_info_from_config_yaml(self, path = None):
+        if path is None:
+            path = self.output_path
 
-        return model_info_args 
+        from_config_yaml = False
+        from_params_json = False
+        from_hparams_yaml = False
+
+        try:
+            with open(path + '/config.yaml') as file:
+                out_config = yaml.load(file, Loader=yaml.FullLoader)
+                from_config_yaml = True
+        except FileNotFoundError:
+            try:
+                with open(path + '/params.json') as file:
+                    out_config = json.load(file)
+                    from_params_json = True
+            except FileNotFoundError:
+                out_config = {}
+        
+        try:
+            with open(path + '/hparams.yaml') as file:
+                hparams = yaml.load(file, Loader=yaml.FullLoader)
+                from_hparams_yaml = True
+        except FileNotFoundError:
+            hparams = {}
+
+        if from_config_yaml:
+            try:
+                models = out_config['model']['names']
+                models[0]
+            except Exception:
+                models = ['neural net ' + self.data_type + ' ' + self.task_type]
+
+            model_config = out_config['model'].get(models[0], {})
+            data_config = out_config.get('data', {})
+            opt_config = out_config.get('optimization', {})
+            env_config = out_config.get('env', {})
+
+            model_name = models[0] + model_config.get('checkpoint_name', '')
+            train_transforms = model_config.get('train_transforms', [])
+            val_transforms = model_config.get('val_transforms', [])
+
+            hparams = {**hparams, **({'max_epochs': opt_config['max_epochs']} if 'max_epochs' in opt_config else {})}
+            hparams = {**hparams, **({'patience': opt_config['patience']} if 'patience' in opt_config else {})}
+            hparams = {**hparams, **({'batch_size': env_config['batch_size']} if 'batch_size' in opt_config else {})}
+            hparams = {**hparams, **({'train_transforms': train_transforms} if train_transforms else {})}
+            hparams = {**hparams, **({'val_transforms': val_transforms} if val_transforms else {})}
+            
+            if from_hparams_yaml:
+                files = {
+                    path + '/config.yaml' : 'config.yaml',
+                    path + '/hparams.yaml': 'hparams.yaml'
+                }
+            else:
+                files = {
+                    path + '/config.yaml' : 'config.yaml'
+                }
+
+        elif from_params_json:
+            models = out_config['root']['model.names']
+            model_name = models[0] + out_config['root']['model.' + models[0] + '.checkpoint_name']
+
+            hparams = {**hparams, **({'max_epochs': out_config['optimization.max_epochs']} if 'optimization.max_epochs' in out_config else {})}
+            hparams = {**hparams, **({'optim_type': out_config['optimization.optim_type']} if 'optimization.optim_type' in out_config else {})}
+            hparams = {**hparams, **({'batch_size': out_config['env.batch_size']} if 'env.batch_size' in out_config else {})}
+            hparams = {**hparams, **({'train_transforms': out_config['optimization.learning_rate']} if 'optimization.learning_rate' in out_config else {})}
+            
+            if from_hparams_yaml:
+                files = {
+                    path + '/params.json' : 'params.json',
+                    path + '/hparams.yaml': 'hparams.yaml'
+                }
+            else:
+                files = {
+                    path + '/params.json' : 'params.json'
+                }
+        
+        mi = ModelInfo(
+            model_name = model_name,
+            model_library = 'autogluon',
+            model_object = PyfuncModel('autogluon', self.model),
+            model_path = self.output_path + 'models/',
+            model_params_dict = {k: v for k, v in hparams.items() if v is not None},
+            model_metrics_dict = self.model.fit_summary(0),
+            model_files_as_paths_dict = files,
+            model_tags_dict = {
+                'data_type': self.data_type,
+                'task_type': self.task_type,
+                'problem_type': self.problem_type,
+            }
+        )
+
+        return mi 
     
+    #---------------------------------------------------------------------------------------------#
+    def _get_hpo_trial_scores(self):
+        trial_scores = {}
+        folders = [f for f in os.listdir(self.output_path) if os.path.isdir(os.path.join(self.output_path, f))]
+        
+        for folder in folders:
+            with open(self.output_path + f'/{folder}/progress.csv') as file:
+                progress = pd.read_csv(file)
+
+        
+            val_score_col = [col for col in progress.columns if col.startswith('val_')][0]      
+            series = progress.loc[progress[val_score_col[0]].nlargest(1).index[-1]]
+
+            trial_id = series['trial_id']
+            trial_scores[trial_id] = series[val_score_col[0]]
+            
+        # i.e. score is loss, lower is better        
+        reverse = False if list(trial_scores.values())[0] < 0 else True
+        trial_scores = {k: v for k, v in sorted(trial_scores.items(), key=lambda item: item[1], reverse=reverse)}
+
+    #---------------------------------------------------------------------------------------------#
+    def _get_info_from_hpo(self, n_th_model, trial_scores):
+        
+        trial_id = list(trial_scores.keys())[n_th_model]
+
+        path = self.output_path + f'/{trial_id}/'
+
+        model_info = self._get_info_from_config_yaml(path)
+
+        return model_info
+        
+        
     #---------------------------------------------------------------------------------------------#
     def _handle_zero_shot(self, data, target_column):
         print('Zero-shot models will not be trained. The Model will now make predictions on the data and return the results.')
@@ -342,30 +451,3 @@ class AutoGluonWrapper(AutoMLLibrary):
                     return [targets.replace(',', '. ')]
                 else:
                     return [targets]
-    
-    # #---------------------------------------------------------------------------------------------#
-    # def _prepare_masks(self, mask_series, converted_mask_path):
-    
-    #     def convert_and_binarize(read_path, save_path):
-    #         with Image.open(read_path) as img:
-    #             img = img.convert('L')
-    #             img_array = np.array(img)
-    #             binary_array = np.where(img_array > 0, 1, 0)
-    #             binary_img = Image.fromarray(binary_array.astype(np.uint8) * 255, 'L')
-    #             binary_img.save(save_path, 'PNG')
-
-    #     if not os.path.exists(converted_mask_path):
-    #         os.makedirs(converted_mask_path)
-    #     else:
-    #         for file in os.listdir(converted_mask_path):
-    #             os.remove(os.path.join(converted_mask_path, file))
-        
-    #     new_masks = []
-    #     for fullfile in mask_series:
-    #         if fullfile.endswith('.png') or fullfile.endswith('.jpg'):
-    #             filename = os.path.basename(fullfile)
-    #             save_path = os.path.join(converted_mask_path, filename)
-    #             convert_and_binarize(fullfile, save_path)
-    #             new_masks.append(save_path)
-        
-    #     return new_masks
