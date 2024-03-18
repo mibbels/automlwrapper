@@ -30,7 +30,6 @@ MultiModalPredictor:
         __has_values: true
         __values:
           - accuracy
-          - balanced_accuracy
           - f1
           - f1_macro
           - f1_micro
@@ -72,7 +71,6 @@ MultiModalPredictor:
         __has_values: true
         __values:
           - accuracy
-          - balanced_accuracy
           - f1
           - f1_macro
           - f1_micro

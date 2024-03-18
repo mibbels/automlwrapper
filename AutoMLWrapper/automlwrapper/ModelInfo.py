@@ -13,7 +13,7 @@ class ModelInfo:
         model_tags_dict: Dict[str, str] = {},
         model_path: Optional[str] = None,
         model_imgs_as_pil_dict: Optional[Dict[str, Image.Image]] = {},
-        model_files_as_path_list: Optional[List[str, str]] = {}
+        model_files_as_path_list: Optional[List[str]] = {}
     ):
         self.model_name = model_name
         self.model_library = model_library

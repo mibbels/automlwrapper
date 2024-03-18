@@ -256,7 +256,8 @@ class AutoGluonWrapper(AutoMLLibrary):
             model_path = self.output_path + 'models/',
             model_params_dict = dict_summary['model_hyperparams'].get(model_name, {}),
             model_metrics_dict = {
-                'val_score': df_leaderboard.loc[df_leaderboard['model'] == model_name, 'score_val'].values[0]
+                'val_score': df_leaderboard.loc[df_leaderboard['model'] == model_name, 'score_val'].values[0],
+                **({self.eval_output} if self.eval_output is not None else {})
             },
             model_tags_dict = {
                 'data_type': self.data_type,
@@ -307,7 +308,7 @@ class AutoGluonWrapper(AutoMLLibrary):
             opt_config = out_config.get('optimization', {})
             env_config = out_config.get('env', {})
 
-            model_name = models[0] + model_config.get('checkpoint_name', '')
+            model_name = models[0] + ':' + model_config.get('checkpoint_name', '')
             train_transforms = model_config.get('train_transforms', [])
             val_transforms = model_config.get('val_transforms', [])
 
@@ -324,7 +325,7 @@ class AutoGluonWrapper(AutoMLLibrary):
 
         elif from_params_json:
             models = out_config['root']['model.names']
-            model_name = models[0] + out_config['root']['model.' + models[0] + '.checkpoint_name']
+            model_name = models[0] + ':' + out_config['root']['model.' + models[0] + '.checkpoint_name']
 
             hparams = {**hparams, **({'max_epochs': out_config['optimization.max_epochs']} if 'optimization.max_epochs' in out_config else {})}
             hparams = {**hparams, **({'optim_type': out_config['optimization.optim_type']} if 'optimization.optim_type' in out_config else {})}
@@ -336,13 +337,17 @@ class AutoGluonWrapper(AutoMLLibrary):
             else:
                 files = [ path + '/config.yaml',]
         
+        metrics = self.model.fit_summary(0)
+        if self.eval_output is not None:
+            metrics = {**metrics, **self.eval_output}
+
         mi = ModelInfo(
             model_name = model_name,
             model_library = 'autogluon',
             model_object = PyfuncModel('autogluon', self.model),
             model_path = self.output_path + 'models/',
             model_params_dict = {k: v for k, v in hparams.items() if v is not None},
-            model_metrics_dict = self.model.fit_summary(0),
+            model_metrics_dict = metrics,
             model_files_as_path_list = files,
             model_tags_dict = {
                 'data_type': self.data_type,
