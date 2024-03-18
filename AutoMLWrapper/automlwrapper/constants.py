@@ -101,3 +101,8 @@ def isDataTypeImage(data_type: str):
 def isDataTypeText(data_type: str):
     return data_type.lower() in [TEXT, 'txt', 'text']
 
+
+def isImgFile(path: str):
+    return path.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif'))
+
+
