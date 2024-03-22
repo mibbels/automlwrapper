@@ -252,6 +252,16 @@ class SedarDataLoader:
                     if img.mode == 'RGBA':
                         img = img.convert('RGB')
                         img_arr = np.array(img)
+                    if img.mode == 'RGB':
+                        img_arr = np.array(img)
+                        try:
+                            if img_arr.shape[2] != 3:
+                                img_arr = img_arr.reshape(img_arr.shape[0], img_arr.shape[1], 3)
+                        except Exception as e:
+                            pass
+                    else:
+                        print(f'unhandled image mode {img.mode}')
+                        img_arr = np.array(img)
 
                     images.append(img_arr)
                     

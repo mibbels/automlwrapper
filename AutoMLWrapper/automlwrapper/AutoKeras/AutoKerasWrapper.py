@@ -36,7 +36,7 @@ class AutoKerasWrapper(AutoMLLibrary):
         
         if type(data) in [pd.DataFrame]:
             if self.data_type == 'image' and self.task_type == 'classification':
-                x, y = SedarDataLoader.class_df_to_np(data, target=target)
+                x, y = SedarDataLoader.imageDataFrameToNumpyXy(data, target=target)
             else:
                 x, y = self.separate(data, target, type='pandas') 
                 
