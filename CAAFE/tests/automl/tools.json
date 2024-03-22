@@ -1,0 +1,17 @@
+[
+    {
+        "displayname": "auto-sklearn",
+        "class": "sklearn.cluster.KMeans",
+        "parameters": {"n_clusters":"number:int", "n_init":"number:int","max_iter":"number:int", "algorithm": "algorithm:str"}
+    }, 
+    {
+        "displayname":"auto-keras",
+        "class": "sklearn.cluster.AffinityPropagation",
+        "parameters":{"damping": "damping:float", "max_iter":"number:int", "convergence_iter":"number:int", "affinity": "affinity:str"}
+    },
+    {
+        "displayname":"auto-gluon",
+        "class": "sklearn.cluster.MeanShift",
+        "parameters":{"bandwidth":"number:float","max_iter":"number:int"}
+    }
+]
