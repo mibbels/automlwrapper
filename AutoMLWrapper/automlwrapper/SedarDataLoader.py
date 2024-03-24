@@ -1,9 +1,9 @@
 import sys
-import json
 import os
 import shutil
 import zipfile
-
+import logging
+from typing import Union, List, Optional, Tuple
 import pandas as pd
 import numpy as np
 
@@ -25,6 +25,7 @@ from .constants import *
 from sklearn.model_selection import train_test_split
 
 
+logger = logging.getLogger('automlwrapper')
 
 class SedarDataLoader:
     __slots__ = ['spark_session', 'sedarapi', 'hdfs']
@@ -85,121 +86,181 @@ class SedarDataLoader:
         return df
 
     # --------------------------------------------------------------------------------------------#
-    def query_data(self, sedar_workspace_id, sedar_dataset_id, query=None, file_save_location=None):
-        QUERY_SPARK = True
-        QUERY_RAW = False
+    def query_data(self, sedar_workspace_id: str, sedar_dataset_id: str,
+                   query: Optional[str] = None, file_save_location: Optional[str] = None) -> Union[pd.DataFrame, List[str]]:
+        """
+        Queries data from a specified SEDAR workspace and dataset. It can return a pandas DataFrame for structured data
+        or save unstructured data to a specified location and return the paths.
+
+        Parameters:
+        - sedar_workspace_id (str): The ID of the SEDAR workspace.
+        - sedar_dataset_id (str): The ID of the SEDAR dataset.
+        - query (Optional[str]): An SQL query to run against the dataset if it is structured. Defaults to None.
+        - file_save_location (Optional[str]): The directory path to save files if the dataset is unstructured. Defaults to None.
+
+        Returns:
+        Union[pd.DataFrame, List[str]]: A pandas DataFrame for structured data or a list of file paths for unstructured data.
+        """
+        logger.info("Querying data from SEDAR.")
 
         ws = self.sedarapi.get_workspace(sedar_workspace_id)
         ds = ws.get_dataset(sedar_dataset_id)
 
-        if ds.content['schema']['type'] == 'UNSTRUCTURED':
-            QUERY_SPARK = False
-            QUERY_RAW = True
-        elif ds.content['schema']['type'] == 'STRUCTURED':
-            pass
-        elif ds.content['schema']['type'] == 'SEMISTRUCTURED':
-            pass
-        elif ds.content['schema']['type'] == 'IMAGE':
-            QUERY_SPARK = False
-            QUERY_RAW = True
-        else:
-            raise Exception(f'Recieved unknown schema "{ds.content["schema"]["type"]}" type for dataset.')
-
-
-        if QUERY_SPARK and query is None:
-            query = f'SELECT * FROM {ds.id}'
-
-        if QUERY_SPARK:
-            query_result = ds.query_sourcedata(query)
-
-            df = pd.DataFrame.from_dict(query_result['body'])
-
-            print('INFO: the data has been returned as a pandas dataframe')
-            return df
+        try:
+            schema_type = ds.content['schema']['type'].upper()
+            query_spark = schema_type in ['STRUCTURED', 'SEMISTRUCTURED']
+            query_raw = schema_type in ['UNSTRUCTURED', 'IMAGE']
+            
+            if not query_spark and not query_raw:
+                logger.error(f'Recieved unknown schema "{ds.content["schema"]["type"]}" type for dataset.')
+                raise Exception(f'Recieved unknown schema "{ds.content["schema"]["type"]}" type for dataset.')
+            
+            logger.info(f'Found schema type "{ds.content["schema"]["type"]}" for dataset.')
         
-        elif QUERY_RAW:
-            """ TODO: implement raw query in sedarapi 
-            """
-            if not file_save_location:
-                raise Exception('file_save_location must be provided for raw query.')
-            
-            if not os.path.exists(file_save_location):
-                os.makedirs(file_save_location)
-            
-            ws_id = ws.content['id']
-            source_id = ds.content['datasource']['id']
-            filenames = ds.content['datasource']['revisions'][-1]['source_files']
-            for file in filenames:
-                path = f"/datalake/{ws_id}/data/unstructured/{source_id}/{file[5:]}"
-                data = self.hdfs.read_file(path)
+        except KeyError:
+            logger.error('Recieved dataset with no schema.')
+            raise Exception('Recieved dataset with no schema.')
 
-                if not data:
-                    raise Exception(f'Could not read file {path} from HDFS.')
+
+        if query_spark:
+                if query is None:
+                    query = f'SELECT * FROM {ds.id}'
+                try:
+                    query_result = ds.query_sourcedata(query)
+                except Exception as e:
+                    logger.error(f'Error querying data with SEDAR API: {e}')
+                    raise Exception(f'Error querying data with SEDAR API: {e}')
                 
-                with open(os.path.join(file_save_location, file[5:]), 'wb') as f:
-                    f.write(data)
-            
-            write_paths = "\n".join([os.path.join(file_save_location, file[5:]) for file in filenames])
-            print(f'INFO: the data has been written to: {write_paths}')   
+                df = pd.DataFrame.from_dict(query_result['body'])
+                logger.info("Structured data has been queried successfully.")
+                return df
+        
+        elif query_raw:
+                if not file_save_location:
+                    raise ValueError('File save location must be provided for raw query.')
+                logger.info(f"Attempting to save unstructured data.")
 
-            return [os.path.join(file_save_location, file[5:]) for file in filenames]
+                if not os.path.exists(file_save_location):
+                    logger.info(f"Creating directory {file_save_location}")
+                    os.makedirs(file_save_location)
+
+                ws_id = ws.content['id']
+                source_id = ds.content['datasource']['id']
+                
+                try:
+                    source_filenames = ds.content['datasource']['revisions'][-1]['source_files']
+                except KeyError:
+                    logger.error(f'Recieved dataset with no source files: {ds.content["datasource"]["revisions"][-1]["source_files"]} for revision {ds.content["datasource"]["revisions"][-1]}')
+                    raise Exception(f'Recieved dataset with no source files: {ds.content["datasource"]["revisions"][-1]["source_files"]} for revision {ds.content["datasource"]["revisions"][-1]}')
+                
+                write_paths = []
+                logger.info(f"Recieved source files: {source_filenames}")
+
+                for file in source_filenames:
+                    dest_path = os.path.join(file_save_location, file[5:])
+                    hdfs_path = f"/datalake/{ws_id}/data/unstructured/{source_id}/{file[5:]}"
+                    try:
+                        data = self.hdfs.read_file(hdfs_path)
+                    except Exception as e:
+                        logger.error(f'Error reading file {hdfs_path} from HDFS: {e}')
+                        raise Exception(f'Error reading file {hdfs_path} from HDFS: {e}')
+                    
+                    if not data:
+                        logger.error(f"Recieved empty data for file {hdfs_path}")
+                        raise Exception(f"Recieved empty data for file {hdfs_path}")
+                    
+                    logger.info(f"Saving orig. file {file} to {dest_path}.")
+                    with open(dest_path, 'wb') as f:
+                        f.write(data)
+
+                    write_paths.append(dest_path)
+                logger.info("Unstructured data has been saved successfully.")
+                return write_paths
 
     #---------------------------------------------------------------------------------------------#
-    def _convert_masks_for_gluon(self, mask_list, replace = True):
-    
-        def convert_and_binarize(read_path):
-   
-            with Image.open(read_path) as img:
-                img = img.convert('L')
-                img_array = np.array(img)
-                binary_array = np.where(img_array > 0, 1, 0)
-                binary_img = Image.fromarray(binary_array.astype(np.uint8) * 255, 'L')
-                if replace:
-                    dest = read_path
-                else:
-                    dest = read_path + '_converted'
-                binary_img.save(dest , 'PNG')
+    def _convert_masks_for_gluon(self, mask_list: List[str], replace: bool = True) -> List[str]:
+        """ convert masks to binary (PIL code L) and map to 0 and 1 values."""
+        logger.info(f"Converting and binarizing all mask images.")
 
-                return dest
+        def convert_and_binarize(read_path):            
+            try:
+                with Image.open(read_path) as img:
+                    logger.debug(f"Got image with mode {img.mode}, size {img.size} and format {img.format}")
+                    img = img.convert('L')
+                    img_array = np.array(img)
+                    binary_array = np.where(img_array > 0, 1, 0)
+                    binary_img = Image.fromarray(binary_array.astype(np.uint8) * 255, 'L')
+                    if replace:
+                        dest = read_path
+                    else:
+                        dest = read_path + '_converted'
+                    binary_img.save(dest, 'PNG')
+                    logger.debug(f"Mask image {read_path} converted and saved to {dest}")
+                    return dest
+            except Exception as e:
+                logger.error(f"Failed to convert and save mask image at {read_path}: {e}")
+                raise Exception(f"Failed to convert and save mask image at {read_path}: {e}")
         
         new_masks = []
         for full_file in mask_list:
             if isImgFile(full_file):
-                replaced_file = convert_and_binarize(full_file)
-                new_masks.append(replaced_file)
+                try:
+                    replaced_file = convert_and_binarize(full_file)
+                    new_masks.append(replaced_file)
+                except Exception as e:
+                    logger.error(f"Error processing file {full_file}: {e}")
+                    raise ValueError(f"Error processing file {full_file}") from e
+            else:
+                logger.info(f"File {full_file} is not an image.")
+                pass
         
         return new_masks
     
     # --------------------------------------------------------------------------------------------#
-    def segmentationAsDataFrame(self, zip_path, unzip_path, convert_masks=True):
-        file_paths = self.extract_zip(zip_path, unzip_path)
+    def segmentation_as_data_frame(self, zip_path: str, unzip_path: str, convert_masks: bool = True) -> pd.DataFrame:
+        
+        try:
+            file_paths = self.extract_zip(zip_path, unzip_path)
+        except Exception as e:
+            logger.error(f"Failed to extract zip file {zip_path}: {e}")
+            raise
 
         image_list = []
         mask_list = []
 
         for path in file_paths:
             full_path = os.path.join(unzip_path, path)
-            #file_name, file_ext = os.path.splitext(os.path.basename(path))
 
             if (('images/' in path or 'image/' in path or 'data/' in path or 'img/' in path) and
-            path.endswith(('jpg', 'jpeg', 'png'))):
+            isImgFile(full_path)):
                 image_list.append(full_path)
             elif (('mask/' in path or 'masks/' in path or 'label/' in path or 'labels/' in path) and
-            path.endswith(('jpg', 'jpeg', 'png'))):
+            isImgFile(full_path)):
                 mask_list.append(full_path)
         
         image_list = sorted(image_list)
         mask_list = sorted(mask_list)
 
         if convert_masks:
-            mask_list = self._convert_masks_for_gluon(mask_list)#, os.path.join(unzip_path, 'converted_masks'))
+            mask_list = self._convert_masks_for_gluon(mask_list)
 
         df = pd.DataFrame(data={'image': image_list, 'label': mask_list})
         return df
 
     # --------------------------------------------------------------------------------------------#
     def cocoAsDataFrame(self, zip_path, unzip_path):
-        file_paths = self.extract_zip(zip_path, unzip_path)
+        try:
+            file_paths = self.extract_zip(zip_path, unzip_path)
+        except Exception as e:
+            logger.error(f"Failed to extract zip file {zip_path}: {e}")
+            raise
+
+        json_files = [path for path in file_paths if path.endswith('.json')]
+        if not json_files:
+            logger.error(f"No label files found in {unzip_path}")
+            raise Exception(f"No label files found in {unzip_path}")
+        if len(json_files) > 1:
+            logger.info(f"More than one label file found in {unzip_path}: {json_files}. Using the first one.")
 
         label_file = [path for path in file_paths if path.endswith('.json')][0]        
 
@@ -207,15 +268,26 @@ class SedarDataLoader:
 
         label_file = os.path.join(unzip_path, label_file)
         root = os.path.dirname(label_file)
+        logger.info(f"Attempting to load COCO annotations from {root}.")
         if os.path.basename(root) == 'annotations':
             root = os.path.dirname(root)
+            logger.info(f"Failed. Attempting to load COCO annotations from {root}.")
+        
+        try:
+            df = from_coco(label_file, root=root)
+        except Exception as e:
+            logger.error(f"Failed to load COCO annotations: {e}")
+            raise Exception(f"Failed to load COCO annotations: {e}")
 
-        df = from_coco(label_file, root=root)
         return df
 
     # --------------------------------------------------------------------------------------------#
     def classificationAsDataFrame(self, zip_path, unzip_path):
-        file_paths = self.extract_zip(zip_path, unzip_path)
+        try:
+            file_paths = self.extract_zip(zip_path, unzip_path)
+        except Exception as e:
+            logger.error(f"Failed to extract zip file {zip_path}: {e}")
+            raise
 
         class_mapping = {}
         data = []
@@ -237,15 +309,14 @@ class SedarDataLoader:
     
     #--------------------------------------------------------------------------------------------#
     @staticmethod
-    def imageDataFrameToNumpyXy(df, target='label', task_type='classification'):
+    def imageDataFrameToNumpyXy(df: pd.DataFrame, target: str = 'label', task_type: str = 'classification') -> Tuple[np.ndarray, np.ndarray]:
         images = []
         labels = []
 
         for index, row in df.iterrows():
             try:
-                with Image.open(row['image']) as img:
-                    
-
+                with Image.open(row['image']) as img:                  
+                    logger.debug(f"Got image with mode {img.mode}, size {img.size} and format {img.format}")
                     if img.mode in ['L', '1'] and len(img_arr.shape) == 2: 
                         img_arr = np.array(img)
                         img_arr = img_arr.reshape(img_arr.shape[0], img_arr.shape[1], 1) 
@@ -262,6 +333,7 @@ class SedarDataLoader:
                     else:
                         print(f'unhandled image mode {img.mode}')
                         img_arr = np.array(img)
+                    logger.debug(f"Converted image to array with shape {img_arr.shape}")
 
                     images.append(img_arr)
                     

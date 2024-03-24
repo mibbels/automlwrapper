@@ -9,4 +9,10 @@ setup(
     package_data={
         'automlwrapper': ['AutoGluon/*.yaml', 'AutoSklearn/*.yaml', 'AutoKeras/*.yaml', './*.yaml'],
     },
+    install_requires=[
+        "openai==0.28",
+        "kaggle",
+        "openml==0.12.0",
+        "tabpfn",
+    ]
 )
