@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='automlwrapper',
+    name='amlwrapper',
     version='0.1',
     description='A wrapper for AutoML libraries',
     packages=find_packages(),
     include_package_data=True,
     package_data={
-        'automlwrapper': ['AutoGluon/*.yaml', 'AutoSklearn/*.yaml', 'AutoKeras/*.yaml', './*.yaml'],
+        'amlwrapper': ['library_wrapper/AutoGluon/*.yaml', 'library_wrapper/AutoSklearn/*.yaml', 'library_wrapper/AutoKeras/*.yaml', './*.yaml'],
     },
     install_requires=[
         "openai==0.28",
