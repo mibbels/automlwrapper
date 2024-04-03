@@ -220,9 +220,7 @@ class AutoGluonWrapper(AutoMLLibrary):
 
         for i in range(n_models):
             if self.data_type in ['tabular', 'timeseries']:
-                model_info = ModelInfo(
-                    **(self._get_info_from_fit_summary(i) or {})
-                )
+                model_info = self._get_info_from_fit_summary(i)
             elif self.data_type in ['image', 'text']:
                 #if self.is_hpo:
                 #    model_info = self._get_info_from_hpo(i, trial_scores)
